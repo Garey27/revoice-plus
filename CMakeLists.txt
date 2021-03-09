@@ -78,9 +78,8 @@ set(CMAKE_CXX_FLAGS_DEBUG "/nologo /Od /Oi- /Ob0 /Gy- /GS /ZI /await")
 set(CMAKE_SHARED_LINKER_FLAGS_DEBUG "/nologo /debug:fastlink /incremental /editandcontinue")
 endif()
 
-find_package(Threads REQUIRED)
 target_link_libraries(revoice_plus PRIVATE opus SILK Speex 	
- -static-libstdc++
+ 	-static-libstdc++
         # Gold linker does not leave symbols from libstdc++ when using --exclude-libs
         # and also does not emit undefined references to dl* functions when using --no-undefined
         -fuse-ld=gold
@@ -89,8 +88,7 @@ target_link_libraries(revoice_plus PRIVATE opus SILK Speex
         # or use -Wl,--version-script with the list of exports.
         -Wl,--exclude-libs,libstdc++
         -Wl,--no-undefined -Wl,--no-allow-shlib-undefined
-
-        Threads::Threads -ldl -lm	
+	-ldl -lm	
         )
 set_target_properties(revoice_plus PROPERTIES COMPILE_FLAGS "-m32" LINK_FLAGS "-m32" POSITION_INDEPENDENT_CODE ON)
 target_include_directories(revoice_plus PRIVATE ${REVP_INCLUDE_DIRS})
