@@ -25,15 +25,6 @@ add_subdirectory(dep/speex)
 if (CMAKE_CXX_COMPILER_ID MATCHES "MSVC") 
     add_definitions(-D_CRT_SECURE_NO_WARNINGS)
     set( CMAKE_SHARED_LINKER_FLAGS "/EXPORT:GiveFnptrsToDll=_GiveFnptrsToDll@8" )
-else()
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fpermissive -m32 -include ${PROJECT_SOURCE_DIR}/force_link_glibc_2.13.h")
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive -m32 -include ${PROJECT_SOURCE_DIR}/force_link_glibc_2.13.h")
-	set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -m32")
-	set(THREADS_PREFER_PTHREAD_FLAG ON)
-    set(CMAKE_CXX_FLAGS     "${CMAKE_CXX_FLAGS} -m32 -D_vsnprintf=vsnprintf")
-    set(CMAKE_CXX_FLAGS_DEBUG   "-O0 -g3")
-    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -m32")
-    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}  -static --no-gnu-unique -static-libgcc -static-libstdc++ -Wl,--exclude-libs,libstdc++ -ldl -lrt -lm -lpthread -m32 -Wl,--whole-archive -lpthread -Wl,--no-whole-archive")
 endif()
 
 
@@ -79,15 +70,7 @@ set(CMAKE_SHARED_LINKER_FLAGS_DEBUG "/nologo /debug:fastlink /incremental /edita
 endif()
 
 target_link_libraries(revoice_plus PRIVATE opus SILK Speex 	
- 	-static-libstdc++
-        # Gold linker does not leave symbols from libstdc++ when using --exclude-libs
-        # and also does not emit undefined references to dl* functions when using --no-undefined
-        -fuse-ld=gold
-        # Assume libstdc++ is not compiled with -flto, in case of -flto we should
-        # either compile libstdc++ with no exports (AFAIK it is not currently possible)
-        # or use -Wl,--version-script with the list of exports.
-        -Wl,--exclude-libs,libstdc++
-        -Wl,--no-undefined -Wl,--no-allow-shlib-undefined
+ 	-static-libstdc++      
 	-ldl -lm	
         )
 set_target_properties(revoice_plus PROPERTIES COMPILE_FLAGS "-m32" LINK_FLAGS "-m32" POSITION_INDEPENDENT_CODE ON)
