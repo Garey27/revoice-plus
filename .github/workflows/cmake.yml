@@ -8,9 +8,9 @@ env:
 
 jobs:
   build:
-    env:
-      - CMAKE_TOOLCHAIN_FILE:linux-i686.cmake
     runs-on: ubuntu-latest
+    env:
+      CMAKE_TOOLCHAIN_FILE: 'linux-i686.cmake'
     container:
       image: 'frebib/alpine-cmake'
 
