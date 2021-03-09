@@ -43,15 +43,8 @@ jobs:
       # Execute the build.  You can specify a specific target with "--target <NAME>"
       run: cmake --build . --config $BUILD_TYPE --parallel
       
-      
-    - name: Zip release
-      working-directory: ${{github.workspace}}/build
-      shell: bash
-      # Execute the build.  You can specify a specific target with "--target <NAME>"
-      run: tar -zcvf revoice-plus.tar.gz ../out/revoice_plus_mm.so
-      
     - name: Upload artifact
       uses: actions/upload-artifact@v2
       with:
         name: revoice-plus
-        path: ${{github.workspace}}/build/revoice-plus.tar.gz
+        path: ${{github.workspace}}/out/revoice_plus_mm.so
