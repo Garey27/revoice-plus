@@ -73,7 +73,6 @@ target_link_libraries(revoice_plus PRIVATE opus SILK Speex
  	-static-libstdc++      
 	-ldl -lm	
         )
-set_target_properties(revoice_plus PROPERTIES COMPILE_FLAGS "-m32" LINK_FLAGS "-m32" POSITION_INDEPENDENT_CODE ON)
 target_include_directories(revoice_plus PRIVATE ${REVP_INCLUDE_DIRS})
 		
 set_target_properties(revoice_plus PROPERTIES PREFIX "")
