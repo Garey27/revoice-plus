@@ -28,7 +28,6 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
 else()
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fpermissive -w -include ${PROJECT_SOURCE_DIR}/force_link_glibc_2.13.h")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive -w -include ${PROJECT_SOURCE_DIR}/force_link_glibc_2.13.h")
-	set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -w -m32")
 endif()
 
 
@@ -75,9 +74,7 @@ endif()
 
 target_link_libraries(revoice_plus PRIVATE opus SILK Speex 	
  	-static-libstdc++      
-	-ldl -lm	
-        )
-set_target_properties(revoice_plus PROPERTIES COMPILE_FLAGS "-m32" LINK_FLAGS "-m32" POSITION_INDEPENDENT_CODE ON)
+	-ldl -lm)
 target_include_directories(revoice_plus PRIVATE ${REVP_INCLUDE_DIRS})
 		
 set_target_properties(revoice_plus PROPERTIES PREFIX "")
