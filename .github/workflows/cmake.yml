@@ -51,8 +51,7 @@ jobs:
       run: tar -zcvf revoice-plus.tar.gz ../out/revoice_plus_mm.so
       
     - name: Upload artifact
-      working-directory: ${{github.workspace}}/build
       uses: actions/upload-artifact@v2
       with:
         name: revoice-plus
-        path: ${{github.workspace}}/revoice-plus.tar.gz
+        path: ${{github.workspace}}/build/revoice-plus.tar.gz
