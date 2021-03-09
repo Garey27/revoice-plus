@@ -48,7 +48,7 @@ jobs:
       working-directory: ${{github.workspace}}/build/out
       shell: bash
       # Execute the build.  You can specify a specific target with "--target <NAME>"
-      run: tar cfz revoice-plus.tar.gz revoice_plus_mm.so
+      run: tar -zcvf revoice-plus.tar.gz revoice_plus_mm.so
       
     - name: Upload wasi-libc
       uses: actions/upload-artifact@v2
