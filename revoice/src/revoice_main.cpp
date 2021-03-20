@@ -648,7 +648,7 @@ void OnClientCommandReceiving(edict_t *pClient) {
 			plr->SetCheckingState(2);
 			RETURN_META(MRES_SUPERCEDE);
 		} else if (FStrEq(command, "VTC_CheckEnd")) {
-			plr->SetCodecType(plr->GetCheckingState() == 2 ? CodecType::vct_silk : CodecType::vct_silk);
+			plr->SetCodecType(plr->GetCheckingState() == 2 ? vct_opus : vct_speex);
 			plr->SetCheckingState(0);			
 			RETURN_META(MRES_SUPERCEDE);
 		}
