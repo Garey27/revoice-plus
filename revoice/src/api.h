@@ -134,3 +134,4 @@ extern VoiceTranscoderAPI g_voiceTranscoderAPI;
 extern RevoiceAPI g_revoiceAPI;
 extern std::unordered_map<uint8_t, std::unordered_map<uint8_t, bool>> g_mute_map;
 extern std::unordered_map<uint32_t, audio_wave_play> g_audio_waves;
+const size_t SVC_STUFFTEXT = 9;

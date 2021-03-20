@@ -636,11 +636,11 @@ void Revoice_Main_DeInit()
 
 // Entity API
 void OnClientCommandReceiving(edict_t *pClient) {
-	CRevoicePlayer *plr = GetPlayerByEdict(pEnt);
+	CRevoicePlayer *plr = GetPlayerByEdict(pClient);
 	auto command = CMD_ARGV(0);
 
 	if (FStrEq(command, "VTC_CheckStart")) {
-		plr->SetChecking(1);
+		plr->SetCheckingState(1);
 		plr->SetCodecType(CodecType::vct_speex);
 		RETURN_META(MRES_SUPERCEDE);
 	} else if (plr->GetCheckingState()) {
@@ -649,9 +649,7 @@ void OnClientCommandReceiving(edict_t *pClient) {
 			RETURN_META(MRES_SUPERCEDE);
 		} else if (FStrEq(command, "VTC_CheckEnd")) {
 			plr->SetCodecType(plr->GetCheckingState() == 2 ? CodecType::vct_silk : CodecType::vct_silk);
-			plr->SetCheckingState(0);
-			LOG_MESSAGE(PLID, "Client %s with %s codec connected", STRING(pClient->v.netname), clientData.HasNewCodec ? "new" : "old");
-
+			plr->SetCheckingState(0);			
 			RETURN_META(MRES_SUPERCEDE);
 		}
 	}
