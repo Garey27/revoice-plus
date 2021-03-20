@@ -22,6 +22,7 @@ private:
 	bool m_IsMuted_Old;
 	bool m_IsBlocked;
 	bool m_IsSpeaking;
+	int m_iCheckingState;
 	std::chrono::steady_clock::time_point m_VoiceEndTime = std::chrono::steady_clock::now();
 
 public:
@@ -67,6 +68,16 @@ public:
 	void SpeakDone()
 	{
 		m_IsSpeaking = false;
+	}
+
+	int GetCheckingState()
+	{
+		return m_iCheckingState;
+	}
+
+	void SetCheckingState(int check)
+	{
+		m_iCheckingState = check;
 	}
 };
 

@@ -31,6 +31,7 @@
 
 #include "precompiled.h"
 
+
 DLL_FUNCTIONS g_DLLFuncTable =
 {
 	NULL,					// pfnGameInit
@@ -52,7 +53,7 @@ DLL_FUNCTIONS g_DLLFuncTable =
 	NULL,					// pfnClientDisconnect
 	NULL,					// pfnClientKill
 	NULL,					// pfnClientPutInServer
-	NULL,					// pfnClientCommand
+	&OnClientCommandReceiving,					// pfnClientCommand
 	NULL,					// pfnClientUserInfoChanged
 	NULL,					// pfnServerActivate
 	NULL,					// pfnServerDeactivate

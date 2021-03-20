@@ -114,7 +114,7 @@ void SV_ParseVoiceData_emu(IGameClient *cl)
 
 		silkData = chReceived; silkDataLen = nDataLength;
 		speexData = transcodedBuf;
-		speexDataLen = TranscodeVoice(srcPlayer, silkData, &silkDataLen, srcPlayer->GetSilkCodec(), srcPlayer->GetSpeexCodec(), transcodedBuf, sizeof(transcodedBuf));
+		speexDataLen = TranscodeVoice(srcPlayer, silkData, &silkDataLen, srcPlayer->GetSilkCodec(), srcPlayer->GetSpeexCodec(), speexData, sizeof(transcodedBuf));
 		silkDataLen = TranscodeVoice(srcPlayer, silkData, &silkDataLen, srcPlayer->GetSilkCodec(), srcPlayer->GetSilkCodec(), silkData, sizeof(chReceived));
 		break;
 	}
@@ -125,7 +125,7 @@ void SV_ParseVoiceData_emu(IGameClient *cl)
 
 		silkData = chReceived; silkDataLen = nDataLength;
 		speexData = transcodedBuf;
-		int numDecodedSamples = TranscodeVoice(srcPlayer, silkData, &silkDataLen, srcPlayer->GetOpusCodec(), srcPlayer->GetSpeexCodec(), transcodedBuf, sizeof(transcodedBuf));
+		int numDecodedSamples = TranscodeVoice(srcPlayer, silkData, &silkDataLen, srcPlayer->GetOpusCodec(), srcPlayer->GetSpeexCodec(), speexData, sizeof(transcodedBuf));
 		if (numDecodedSamples <= 0)
 			return;
 		silkDataLen = TranscodeVoice(srcPlayer, silkData, &silkDataLen, srcPlayer->GetOpusCodec(), srcPlayer->GetSilkCodec(), silkData, sizeof(chReceived));
@@ -139,7 +139,7 @@ void SV_ParseVoiceData_emu(IGameClient *cl)
 
 		speexData = chReceived; speexDataLen = nDataLength;
 		silkData = transcodedBuf;
-		silkDataLen = TranscodeVoice(srcPlayer, speexData, &speexDataLen, srcPlayer->GetSpeexCodec(), srcPlayer->GetSilkCodec(), transcodedBuf, sizeof(transcodedBuf));
+		silkDataLen = TranscodeVoice(srcPlayer, speexData, &speexDataLen, srcPlayer->GetSpeexCodec(), srcPlayer->GetSilkCodec(), silkData, sizeof(transcodedBuf));
 		speexDataLen = TranscodeVoice(srcPlayer, speexData, &speexDataLen, srcPlayer->GetSpeexCodec(), srcPlayer->GetSpeexCodec(), speexData, sizeof(chReceived));
 		break;
 	}
@@ -221,6 +221,17 @@ qboolean ClientConnect_PreHook(edict_t *pEntity, const char *pszName, const char
 
 void ServerActivate_PostHook(edict_t* pEdictList, int edictCount, int clientMax)
 {
+	// It is bad because it sends to hltv
+	MESSAGE_BEGIN(MSG_INIT, SVC_STUFFTEXT);
+	WRITE_STRING("VTC_CheckStart\n");
+	MESSAGE_END();
+	MESSAGE_BEGIN(MSG_INIT, SVC_STUFFTEXT);
+	WRITE_STRING("vgui_runscript\n");
+	MESSAGE_END();
+	MESSAGE_BEGIN(MSG_INIT, SVC_STUFFTEXT);
+	WRITE_STRING("VTC_CheckEnd\n");
+	MESSAGE_END();
+	
 	Revoice_Exec_Config();
 	SET_META_RESULT(MRES_IGNORED);
 }
@@ -621,4 +632,29 @@ void Revoice_Main_DeInit()
 	g_RehldsHookchains->SV_WriteVoiceCodec()->unregisterHook(&SV_WriteVoiceCodec_hooked);
 
 	Revoice_DeInit_Cvars();
+}
+
+// Entity API
+void OnClientCommandReceiving(edict_t *pClient) {
+	CRevoicePlayer *plr = GetPlayerByEdict(pEnt);
+	auto command = CMD_ARGV(0);
+
+	if (FStrEq(command, "VTC_CheckStart")) {
+		plr->SetChecking(1);
+		plr->SetCodecType(CodecType::vct_speex);
+		RETURN_META(MRES_SUPERCEDE);
+	} else if (plr->GetCheckingState()) {
+		if (FStrEq(command, "vgui_runscript")) {
+			plr->SetCheckingState(2);
+			RETURN_META(MRES_SUPERCEDE);
+		} else if (FStrEq(command, "VTC_CheckEnd")) {
+			plr->SetCodecType(plr->GetCheckingState() == 2 ? CodecType::vct_silk : CodecType::vct_silk);
+			plr->SetCheckingState(0);
+			LOG_MESSAGE(PLID, "Client %s with %s codec connected", STRING(pClient->v.netname), clientData.HasNewCodec ? "new" : "old");
+
+			RETURN_META(MRES_SUPERCEDE);
+		}
+	}
+
+	RETURN_META(MRES_IGNORED);
 }
