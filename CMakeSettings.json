@@ -57,24 +57,28 @@
       "cmakeCommandArgs": "",
       "buildCommandArgs": "",
       "ctestCommandArgs": "",
-      "inheritEnvironments": [ "msvc_x86" ],
-      "variables": []
+      "inheritEnvironments": [ "msvc_x86" ]
     },
     {
-      "name": "WSL-GCC-Release",
+      "name": "Linux-GCC-Release",
       "generator": "Ninja",
-      "configurationType": "RelWithDebInfo",
-      "buildRoot": "${projectDir}\\out\\build\\${name}",
-      "installRoot": "${projectDir}\\out\\install\\${name}",
+      "configurationType": "Debug",
       "cmakeExecutable": "cmake",
+      "remoteCopySourcesExclusionList": [ ".vs", ".git", "out" ],
       "cmakeCommandArgs": "",
       "buildCommandArgs": "",
       "ctestCommandArgs": "",
-      "cmakeToolchain": "E:/code/revoice_plus/revoice/linux-i686-gcc-noGNUunique-gold-static-excludeSTDexport-oldGLIBC-noPIC-hidden-ipo-sections.cmake",
       "inheritEnvironments": [ "linux_x86" ],
-      "wslPath": "${defaultWSLPath}",
+      "remoteMachineName": "-971497174;185.248.100.35 (username=root, port=22, authentication=Password)",
+      "remoteCMakeListsRoot": "$HOME/.vs/${projectDirName}/${workspaceHash}/src",
+      "remoteBuildRoot": "$HOME/.vs/${projectDirName}/${workspaceHash}/out/build/${name}",
+      "remoteInstallRoot": "$HOME/.vs/${projectDirName}/${workspaceHash}/out/install/${name}",
+      "remoteCopySources": true,
+      "rsyncCommandArgs": "-t --delete --delete-excluded",
+      "remoteCopyBuildOutput": false,
+      "remoteCopySourcesMethod": "rsync",
       "addressSanitizerRuntimeFlags": "detect_leaks=0",
-      "variables": []
+      "cmakeToolchain": "/root/linux-i686.cmake"
     }
   ]
 }
