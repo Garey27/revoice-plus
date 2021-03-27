@@ -1,5 +1,5 @@
 #include "precompiled.h"
-#include "../../dep/silk/src/SKP_Silk_SigProc_FIX.h"
+#include "SKP_Silk_SigProc_FIX.h"
 
 //std::unordered_map<size_t, std::unordered_map<size_t, bool>> sended_voice;
 

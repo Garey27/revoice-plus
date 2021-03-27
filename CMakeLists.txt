@@ -17,9 +17,9 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/out)
 
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-add_subdirectory(dep/opus)
-add_subdirectory(dep/silk)
-add_subdirectory(dep/speex)
+add_subdirectory(dep/Opus)
+add_subdirectory(dep/SILK)
+add_subdirectory(dep/Speex)
 
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "MSVC") 
@@ -39,9 +39,9 @@ set(REVP_INCLUDE_DIRS
 	dep/metamod
 	revoice/public
 	revoice/src
-	dep/silk/include
-	dep/opus/include
-	dep/speex/include
+	dep/silk
+	dep/Opus/include
+	dep/speex/speex
 	)
 
 set(REVP_SOURCES
@@ -72,7 +72,7 @@ set(CMAKE_CXX_FLAGS_DEBUG "/nologo /Od /Oi- /Ob0 /Gy- /GS /ZI /await")
 set(CMAKE_SHARED_LINKER_FLAGS_DEBUG "/nologo /debug:fastlink /incremental /editandcontinue")
 endif()
 
-target_link_libraries(revoice_plus PRIVATE opus SILK Speex 	
+target_link_libraries(revoice_plus PRIVATE Opus SILK Speex 	
  	-static-libstdc++      
 	-ldl -lm)
 target_include_directories(revoice_plus PRIVATE ${REVP_INCLUDE_DIRS})
