@@ -17,9 +17,9 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/out)
 
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-add_subdirectory(dep/Opus)
-add_subdirectory(dep/SILK)
-add_subdirectory(dep/Speex)
+add_subdirectory(dep/opus)
+add_subdirectory(dep/sILK)
+add_subdirectory(dep/speex)
 
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "MSVC") 
@@ -40,7 +40,7 @@ set(REVP_INCLUDE_DIRS
 	revoice/public
 	revoice/src
 	dep/silk
-	dep/Opus/include
+	dep/opus/include
 	dep/speex/speex
 	)
 
