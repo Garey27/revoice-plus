@@ -21,7 +21,7 @@ endif()
 if(NOT CMAKE_HOST_SYSTEM_NAME STREQUAL Linux)
     message(FATAL_ERROR "This toolchain can only be run on Linux (got ${CMAKE_HOST_SYSTEM_NAME})")
 elseif(CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL x86_64)
-    list(APPEND flags -m32 -O3)
+    list(APPEND flags -m32 -O0)
 elseif(CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "^(i386|i486|i586|i686)$")
     # No op
 else()

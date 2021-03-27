@@ -137,7 +137,11 @@ void SV_ParseVoiceData_emu(IGameClient *cl)
 			return;
 
 		silkDataLen = TranscodeVoice(srcPlayer, chReceived, (int*)&nDataLength, srcPlayer->GetSpeexCodec(), srcPlayer->GetSilkCodec(), silkBuf, sizeof(silkBuf));
+		if (silkDataLen <= 0)
+			return;
 		speexDataLen = TranscodeVoice(srcPlayer, chReceived, (int*)&nDataLength, srcPlayer->GetSpeexCodec(), srcPlayer->GetSpeexCodec(), speexBuf, sizeof(speexBuf));
+		if (speexDataLen <= 0)
+			return;
 		break;
 	}
 	default:
@@ -168,12 +172,10 @@ void SV_ParseVoiceData_emu(IGameClient *cl)
 		{
 		case vct_silk:
 		case vct_opus:
-			UTIL_ServerPrintf("0. case 1\n");
 			sendBuf = silkBuf;
 			nSendLen = silkDataLen;
 			break;
 		case vct_speex:
-			UTIL_ServerPrintf("0. case 2\n");
 			sendBuf = speexBuf;
 			nSendLen = speexDataLen;
 			break;
@@ -183,14 +185,12 @@ void SV_ParseVoiceData_emu(IGameClient *cl)
 			break;
 		}
 
-		UTIL_ServerPrintf("0. %d nSendLen %p sendBuf\n", nSendLen, sendBuf);
 		if (sendBuf == nullptr || nSendLen == 0)
 			continue;
 
 		if (dstPlayer == srcPlayer && !dstClient->GetLoopback())
 			nSendLen = 0;
 
-		UTIL_ServerPrintf("1. send?\n");
 		sizebuf_t *dstDatagram = dstClient->GetDatagram();
 		if (dstDatagram->cursize + nSendLen + 4 < dstDatagram->maxsize) {
 			g_RehldsFuncs->MSG_WriteByte(dstDatagram, svc_voicedata);
