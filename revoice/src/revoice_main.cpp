@@ -1,7 +1,7 @@
 #include "precompiled.h"
 #include "../../dep/silk/src/SKP_Silk_SigProc_FIX.h"
 
-std::unordered_map<size_t, std::unordered_map<size_t, bool>> sended_voice;
+//std::unordered_map<size_t, std::unordered_map<size_t, bool>> sended_voice;
 
 void SV_DropClient_hook(IRehldsHook_SV_DropClient *chain, IGameClient *cl, bool crash, const char *msg)
 {
@@ -293,7 +293,12 @@ bool Revoice_Load()
 
 void PlayerPreThink(edict_t* pEntity)
 {
-	sended_voice[ENTINDEX(pEntity) - 1].clear();
+	/*
+	if (pEntity)
+	{
+		sended_voice[ENTINDEX(pEntity) - 1].clear();
+	}
+	*/
 }
 short int mix_sample(short int sample1, short int sample2) {
 	const int32_t result(static_cast<int32_t>(sample1) + static_cast<int32_t>(sample2));

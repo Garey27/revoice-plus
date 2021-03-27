@@ -26,8 +26,8 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
     add_definitions(-D_CRT_SECURE_NO_WARNINGS)
     set( CMAKE_SHARED_LINKER_FLAGS "/EXPORT:GiveFnptrsToDll=_GiveFnptrsToDll@8" )
 else()
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fpermissive -w -include ${PROJECT_SOURCE_DIR}/force_link_glibc_2.13.h")
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive -w -include ${PROJECT_SOURCE_DIR}/force_link_glibc_2.13.h")
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fpermissive -w")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive -w")
 endif()
 
 
