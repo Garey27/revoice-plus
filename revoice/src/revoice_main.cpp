@@ -36,11 +36,9 @@ int TranscodeVoice(CRevoicePlayer *srcPlayer, char *srcBuf, int* srcBufLen, IVoi
 	static char decodedBuf[32768];
 
 	int numDecodedSamples = srcCodec->Decompress(srcBuf, *srcBufLen, decodedBuf, sizeof(decodedBuf));
-	UTIL_ServerPrintf("0. %d decodedSamples\n", numDecodedSamples);
 	if (numDecodedSamples <= 0) {
 		return 0;
 	}
-	UTIL_ServerPrintf("1. %d rate %d rate\n", srcCodec->SampleRate(), dstCodec->SampleRate());
 	if(srcCodec->SampleRate() != dstCodec->SampleRate())
 	{
 		size_t inSampleRate = srcCodec->SampleRate();
@@ -55,7 +53,6 @@ int TranscodeVoice(CRevoicePlayer *srcPlayer, char *srcBuf, int* srcBufLen, IVoi
   	g_OnDecompress(srcPlayer->GetClient()->GetId(), dstCodec->SampleRate(), reinterpret_cast<uint8_t*>(decodedBuf), reinterpret_cast<size_t*>(&numDecodedSamples));
 	
 	int compressedSize = dstCodec->Compress(decodedBuf, numDecodedSamples, dstBuf, dstBufSize, false);
-	UTIL_ServerPrintf("0. %d compressedSize\n", compressedSize);
 	if (compressedSize <= 0) {
 		return 0;
 	}	
@@ -187,12 +184,14 @@ void SV_ParseVoiceData_emu(IGameClient *cl)
 			break;
 		}
 
+		UTIL_ServerPrintf("0. %d nSendLen %p sendBuf\n", nSendLen, sendBuf);
 		if (sendBuf == nullptr || nSendLen == 0)
 			continue;
 
 		if (dstPlayer == srcPlayer && !dstClient->GetLoopback())
 			nSendLen = 0;
 
+		UTIL_ServerPrintf("1. send?\n", nSendLen, sendBuf);
 		sizebuf_t *dstDatagram = dstClient->GetDatagram();
 		if (dstDatagram->cursize + nSendLen + 4 < dstDatagram->maxsize) {
 			g_RehldsFuncs->MSG_WriteByte(dstDatagram, svc_voicedata);
