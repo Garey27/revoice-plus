@@ -110,10 +110,10 @@ void SV_ParseVoiceData_emu(IGameClient *cl)
 		if (nDataLength > MAX_SILK_DATA_LEN || srcPlayer->GetVoiceRate() > MAX_SILK_VOICE_RATE)
 			return;
 
-		speexDataLen = TranscodeVoice(srcPlayer, chReceived, &silkDataLen, srcPlayer->GetSilkCodec(), srcPlayer->GetSpeexCodec(), speexBuf, sizeof(speexBuf));
+		speexDataLen = TranscodeVoice(srcPlayer, chReceived, (int*)&nDataLength, srcPlayer->GetSilkCodec(), srcPlayer->GetSpeexCodec(), speexBuf, sizeof(speexBuf));
 		if (speexDataLen <= 0)
 			return;
-		silkDataLen = TranscodeVoice(srcPlayer, chReceived, &silkDataLen, srcPlayer->GetSilkCodec(), srcPlayer->GetSilkCodec(), silkBuf, sizeof(silkBuf));
+		silkDataLen = TranscodeVoice(srcPlayer, chReceived, (int*)&nDataLength, srcPlayer->GetSilkCodec(), srcPlayer->GetSilkCodec(), silkBuf, sizeof(silkBuf));
 		if (silkDataLen <= 0)
 			return;
 		break;
@@ -123,10 +123,10 @@ void SV_ParseVoiceData_emu(IGameClient *cl)
 		if (nDataLength > MAX_OPUS_DATA_LEN || srcPlayer->GetVoiceRate() > MAX_OPUS_VOICE_RATE)
 			return;
 
-		speexDataLen = TranscodeVoice(srcPlayer, chReceived, &silkDataLen, srcPlayer->GetOpusCodec(), srcPlayer->GetSpeexCodec(), speexBuf, sizeof(speexBuf));
+		speexDataLen = TranscodeVoice(srcPlayer, chReceived, (int*)&nDataLength, srcPlayer->GetOpusCodec(), srcPlayer->GetSpeexCodec(), speexBuf, sizeof(speexBuf));
 		if (speexDataLen <= 0)
 			return;
-		silkDataLen = TranscodeVoice(srcPlayer, chReceived, &silkDataLen, srcPlayer->GetOpusCodec(), srcPlayer->GetSilkCodec(), silkBuf, sizeof(silkBuf));
+		silkDataLen = TranscodeVoice(srcPlayer, chReceived, (int*)&nDataLength, srcPlayer->GetOpusCodec(), srcPlayer->GetSilkCodec(), silkBuf, sizeof(silkBuf));
 		if (silkDataLen <= 0)
 			return;
 		break;
@@ -136,8 +136,8 @@ void SV_ParseVoiceData_emu(IGameClient *cl)
 		if (nDataLength > MAX_SPEEX_DATA_LEN || srcPlayer->GetVoiceRate() > MAX_SPEEX_VOICE_RATE)
 			return;
 
-		silkDataLen = TranscodeVoice(srcPlayer, chReceived, &speexDataLen, srcPlayer->GetSpeexCodec(), srcPlayer->GetSilkCodec(), silkBuf, sizeof(silkBuf));
-		speexDataLen = TranscodeVoice(srcPlayer, chReceived, &speexDataLen, srcPlayer->GetSpeexCodec(), srcPlayer->GetSpeexCodec(), speexBuf, sizeof(speexBuf));
+		silkDataLen = TranscodeVoice(srcPlayer, chReceived, (int*)&nDataLength, srcPlayer->GetSpeexCodec(), srcPlayer->GetSilkCodec(), silkBuf, sizeof(silkBuf));
+		speexDataLen = TranscodeVoice(srcPlayer, chReceived, (int*)&nDataLength, srcPlayer->GetSpeexCodec(), srcPlayer->GetSpeexCodec(), speexBuf, sizeof(speexBuf));
 		break;
 	}
 	default:
