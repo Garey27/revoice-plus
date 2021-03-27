@@ -5,8 +5,6 @@
 #include "opus.h"
 
 const int MAX_CHANNELS = 1;
-const int FRAME_SIZE = 160;
-const int MAX_FRAME_SIZE = 3 * FRAME_SIZE;
 const int MAX_PACKET_LOSS = 10;
 
 class VoiceEncoder_Opus : public IVoiceCodec {
@@ -17,6 +15,9 @@ private:
 
 	int m_samplerate;
 	int m_bitrate;
+
+	int m_frameSize;
+	int m_MaxframeSize;
 
 	uint16 m_nEncodeSeq;
 	uint16 m_nDecodeSeq;

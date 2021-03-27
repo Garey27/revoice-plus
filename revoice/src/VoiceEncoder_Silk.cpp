@@ -69,7 +69,7 @@ int VoiceEncoder_Silk::Compress(const char* pUncompressedIn, int nSamplesIn, cha
 	const char* pWritePosMax; // [sp+2Ch] [bp-40h]@5
 	int nSamplesRemaining; // [sp+38h] [bp-34h]@5
 
-	const int inSampleRate = 8000;
+	const int inSampleRate = 16000;
 	const int nSampleDataMinMS = 100;
 	const int nSamplesMin = inSampleRate * nSampleDataMinMS / 1000;
 

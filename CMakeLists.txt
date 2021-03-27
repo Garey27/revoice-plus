@@ -68,7 +68,7 @@ set(REVP_SOURCES
 	)
 add_library(revoice_plus SHARED ${REVP_SOURCES})
 if (CMAKE_CXX_COMPILER_ID MATCHES "MSVC") 
-set(CMAKE_CXX_FLAGS_DEBUG "/nologo /Od /Oi- /Ob0 /Gy- /GS /ZI /await")
+set(CMAKE_CXX_FLAGS_DEBUG "/nologo /Od /Oi- /Ob0 /GS /ZI /await")
 set(CMAKE_SHARED_LINKER_FLAGS_DEBUG "/nologo /debug:fastlink /incremental /editandcontinue")
 endif()
 
