@@ -31,6 +31,6 @@
 *.out
 *.app
 
-.vs
-out
-
+.vs/
+out/
+build/
