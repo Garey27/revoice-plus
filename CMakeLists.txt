@@ -18,7 +18,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/out)
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 add_subdirectory(dep/opus)
-add_subdirectory(dep/sILK)
+add_subdirectory(dep/silk)
 add_subdirectory(dep/speex)
 
 
