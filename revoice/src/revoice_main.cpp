@@ -53,7 +53,6 @@ int TranscodeVoice(CRevoicePlayer *srcPlayer, char *srcBuf, int* srcBufLen, IVoi
   	g_OnDecompress(srcPlayer->GetClient()->GetId(), dstCodec->SampleRate(), reinterpret_cast<uint8_t*>(decodedBuf), reinterpret_cast<size_t*>(&numDecodedSamples));
 	
 	int compressedSize = dstCodec->Compress(decodedBuf, numDecodedSamples, dstBuf, dstBufSize, false);
-	UTIL_ServerPrintf("1 %d\n", numDecodedSamples);
 	if (compressedSize <= 0) {
 		return 0;
 	}	
@@ -214,7 +213,7 @@ void Rehlds_HandleNetCommand(IRehldsHook_HandleNetCommand *chain, IGameClient *c
 	chain->callNext(cl, opcode);
 }
 
-qboolean ClientConnect_PreHook(edict_t *pEntity, const char *pszName, const char *pszAddress, char szRejectReason[128])
+qboolean ClientConnect_PostHook(edict_t *pEntity, const char *pszName, const char *pszAddress, char szRejectReason[128])
 {
 	CRevoicePlayer *plr = GetPlayerByEdict(pEntity);
 	plr->OnConnected();
@@ -657,7 +656,7 @@ void OnClientCommandReceiving(edict_t *pClient) {
 			RETURN_META(MRES_SUPERCEDE);
 		} else if (FStrEq(command, "VTC_CheckEnd")) {
 			plr->SetCodecType(plr->GetCheckingState() == 2 ? vct_opus : vct_speex);
-			plr->SetCheckingState(0);			
+			plr->SetCheckingState(0);	
 			RETURN_META(MRES_SUPERCEDE);
 		}
 	}

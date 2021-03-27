@@ -49,7 +49,7 @@ DLL_FUNCTIONS g_DLLFuncTable =
 	NULL,					// pfnSaveGlobalState
 	NULL,					// pfnRestoreGlobalState
 	NULL,					// pfnResetGlobalState
-	&ClientConnect_PreHook,					// pfnClientDisconnect
+	NULL,	// pfnClientConnect
 	NULL,					// pfnClientDisconnect
 	NULL,					// pfnClientKill
 	NULL,					// pfnClientPutInServer
@@ -103,7 +103,7 @@ DLL_FUNCTIONS g_DLLFuncTable_Post =
 	NULL,					// pfnSaveGlobalState
 	NULL,					// pfnRestoreGlobalState
 	NULL,					// pfnResetGlobalState
-	NULL,					// pfnClientConnect
+	&ClientConnect_PostHook,					// pfnClientConnect
 	NULL,					// pfnClientDisconnect
 	NULL,					// pfnClientKill
 	NULL,					// pfnClientPutInServer

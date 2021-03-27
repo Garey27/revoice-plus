@@ -139,11 +139,8 @@ int CSteamP2PCodec::Compress(const char *pUncompressedBytes, int nSamples, char 
 	}
 
 	char *writePos = pCompressed;
-	*(uint32 *)writePos = 0x00000011; // steamid (low part)
-	writePos += 4;
-
-	*(uint32 *)writePos = 0x01100001; // steamid (high part)
-	writePos += 4;
+	*(uint64 *)writePos = m_Steamid; // steamid
+	writePos += 8;
 
 	int encodeRes = StreamEncode(pUncompressedBytes, nSamples, writePos, maxCompressedBytes - 12, bFinal);
 	if (encodeRes <= 0) {
