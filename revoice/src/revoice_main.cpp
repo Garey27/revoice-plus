@@ -192,6 +192,7 @@ void SV_ParseVoiceData_emu(IGameClient *cl)
 		if (dstPlayer == srcPlayer && !dstClient->GetLoopback())
 			nSendLen = 0;
 
+		
 		sizebuf_t *dstDatagram = dstClient->GetDatagram();
 		if (dstDatagram->cursize + nSendLen + 4 < dstDatagram->maxsize) {
 			g_RehldsFuncs->MSG_WriteByte(dstDatagram, svc_voicedata);
