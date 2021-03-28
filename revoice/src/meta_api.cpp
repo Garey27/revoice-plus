@@ -58,7 +58,7 @@ plugin_info_t Plugin_info = {
 	"The Legion",	// author
 	"",	// url
 	"REVOICE",	// logtag, all caps please
-	PT_STARTUP,	// (when) loadable
+	PT_ANYTIME,	// (when) loadable
 	PT_NEVER,	// (when) unloadable
 };
 
