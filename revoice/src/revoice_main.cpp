@@ -1,7 +1,7 @@
 #include "precompiled.h"
-#include "../../dep/silk/src/SKP_Silk_SigProc_FIX.h"
+#include "SKP_Silk_SigProc_FIX.h"
 
-std::unordered_map<size_t, std::unordered_map<size_t, bool>> sended_voice;
+//std::unordered_map<size_t, std::unordered_map<size_t, bool>> sended_voice;
 
 void SV_DropClient_hook(IRehldsHook_SV_DropClient *chain, IGameClient *cl, bool crash, const char *msg)
 {
@@ -47,7 +47,7 @@ int TranscodeVoice(CRevoicePlayer *srcPlayer, char *srcBuf, int* srcBufLen, IVoi
 
 		SKP_Silk_resampler_state_struct resamplerState;
 		SKP_Silk_resampler_init(&resamplerState, inSampleRate, outSampleRate);
-		SKP_Silk_resampler(&resamplerState, (short*)decodedBuf, (short*)decodedBuf, numDecodedSamples/2);
+		SKP_Silk_resampler(&resamplerState, (short*)decodedBuf, (short*)decodedBuf, numDecodedSamples);
 		numDecodedSamples = outSampleCount;
 	}
   	g_OnDecompress(srcPlayer->GetClient()->GetId(), dstCodec->SampleRate(), reinterpret_cast<uint8_t*>(decodedBuf), reinterpret_cast<size_t*>(&numDecodedSamples));
@@ -72,7 +72,12 @@ int EncodeVoice(size_t senderId, char* srcBuf, int srcBufLen, IVoiceCodec* dstCo
 
 void SV_ParseVoiceData_emu(IGameClient *cl)
 {
-	char chReceived[4096];
+	static char silkBuf[4096];
+	static char speexBuf[4096];
+	static char chReceived[4096];
+
+	int silkDataLen = 0;
+	int speexDataLen = 0;
 	unsigned int nDataLength = g_RehldsFuncs->MSG_ReadShort();
 
 	if (nDataLength > sizeof(chReceived)) {
@@ -97,13 +102,6 @@ void SV_ParseVoiceData_emu(IGameClient *cl)
 	srcPlayer->SetLastVoiceTime(g_RehldsSv->GetTime());
 	srcPlayer->IncreaseVoiceRate(nDataLength);
 
-	static char transcodedBuf[4096];
-
-	char *silkData = nullptr;
-	char *speexData = nullptr;
-
-	int silkDataLen = 0;
-	int speexDataLen = 0;
 
 	switch (srcPlayer->GetCodecType())
 	{
@@ -112,10 +110,12 @@ void SV_ParseVoiceData_emu(IGameClient *cl)
 		if (nDataLength > MAX_SILK_DATA_LEN || srcPlayer->GetVoiceRate() > MAX_SILK_VOICE_RATE)
 			return;
 
-		silkData = chReceived; silkDataLen = nDataLength;
-		speexData = transcodedBuf;
-		speexDataLen = TranscodeVoice(srcPlayer, silkData, &silkDataLen, srcPlayer->GetSilkCodec(), srcPlayer->GetSpeexCodec(), speexData, sizeof(transcodedBuf));
-		silkDataLen = TranscodeVoice(srcPlayer, silkData, &silkDataLen, srcPlayer->GetSilkCodec(), srcPlayer->GetSilkCodec(), silkData, sizeof(chReceived));
+		speexDataLen = TranscodeVoice(srcPlayer, chReceived, (int*)&nDataLength, srcPlayer->GetSilkCodec(), srcPlayer->GetSpeexCodec(), speexBuf, sizeof(speexBuf));
+		if (speexDataLen <= 0)
+			return;
+		silkDataLen = TranscodeVoice(srcPlayer, chReceived, (int*)&nDataLength, srcPlayer->GetSilkCodec(), srcPlayer->GetSilkCodec(), silkBuf, sizeof(silkBuf));
+		if (silkDataLen <= 0)
+			return;
 		break;
 	}
 	case vct_opus:
@@ -123,13 +123,12 @@ void SV_ParseVoiceData_emu(IGameClient *cl)
 		if (nDataLength > MAX_OPUS_DATA_LEN || srcPlayer->GetVoiceRate() > MAX_OPUS_VOICE_RATE)
 			return;
 
-		silkData = chReceived; silkDataLen = nDataLength;
-		speexData = transcodedBuf;
-		int numDecodedSamples = TranscodeVoice(srcPlayer, silkData, &silkDataLen, srcPlayer->GetOpusCodec(), srcPlayer->GetSpeexCodec(), speexData, sizeof(transcodedBuf));
-		if (numDecodedSamples <= 0)
+		speexDataLen = TranscodeVoice(srcPlayer, chReceived, (int*)&nDataLength, srcPlayer->GetOpusCodec(), srcPlayer->GetSpeexCodec(), speexBuf, sizeof(speexBuf));
+		if (speexDataLen <= 0)
 			return;
-		silkDataLen = TranscodeVoice(srcPlayer, silkData, &silkDataLen, srcPlayer->GetOpusCodec(), srcPlayer->GetSilkCodec(), silkData, sizeof(chReceived));
-		speexDataLen = numDecodedSamples;
+		silkDataLen = TranscodeVoice(srcPlayer, chReceived, (int*)&nDataLength, srcPlayer->GetOpusCodec(), srcPlayer->GetSilkCodec(), silkBuf, sizeof(silkBuf));
+		if (silkDataLen <= 0)
+			return;
 		break;
 	}
 	case vct_speex:
@@ -137,10 +136,12 @@ void SV_ParseVoiceData_emu(IGameClient *cl)
 		if (nDataLength > MAX_SPEEX_DATA_LEN || srcPlayer->GetVoiceRate() > MAX_SPEEX_VOICE_RATE)
 			return;
 
-		speexData = chReceived; speexDataLen = nDataLength;
-		silkData = transcodedBuf;
-		silkDataLen = TranscodeVoice(srcPlayer, speexData, &speexDataLen, srcPlayer->GetSpeexCodec(), srcPlayer->GetSilkCodec(), silkData, sizeof(transcodedBuf));
-		speexDataLen = TranscodeVoice(srcPlayer, speexData, &speexDataLen, srcPlayer->GetSpeexCodec(), srcPlayer->GetSpeexCodec(), speexData, sizeof(chReceived));
+		silkDataLen = TranscodeVoice(srcPlayer, chReceived, (int*)&nDataLength, srcPlayer->GetSpeexCodec(), srcPlayer->GetSilkCodec(), silkBuf, sizeof(silkBuf));
+		if (silkDataLen <= 0)
+			return;
+		speexDataLen = TranscodeVoice(srcPlayer, chReceived, (int*)&nDataLength, srcPlayer->GetSpeexCodec(), srcPlayer->GetSpeexCodec(), speexBuf, sizeof(speexBuf));
+		if (speexDataLen <= 0)
+			return;
 		break;
 	}
 	default:
@@ -171,11 +172,11 @@ void SV_ParseVoiceData_emu(IGameClient *cl)
 		{
 		case vct_silk:
 		case vct_opus:
-			sendBuf = silkData;
+			sendBuf = silkBuf;
 			nSendLen = silkDataLen;
 			break;
 		case vct_speex:
-			sendBuf = speexData;
+			sendBuf = speexBuf;
 			nSendLen = speexDataLen;
 			break;
 		default:
@@ -190,6 +191,7 @@ void SV_ParseVoiceData_emu(IGameClient *cl)
 		if (dstPlayer == srcPlayer && !dstClient->GetLoopback())
 			nSendLen = 0;
 
+		
 		sizebuf_t *dstDatagram = dstClient->GetDatagram();
 		if (dstDatagram->cursize + nSendLen + 4 < dstDatagram->maxsize) {
 			g_RehldsFuncs->MSG_WriteByte(dstDatagram, svc_voicedata);
@@ -211,7 +213,7 @@ void Rehlds_HandleNetCommand(IRehldsHook_HandleNetCommand *chain, IGameClient *c
 	chain->callNext(cl, opcode);
 }
 
-qboolean ClientConnect_PreHook(edict_t *pEntity, const char *pszName, const char *pszAddress, char szRejectReason[128])
+qboolean ClientConnect_PostHook(edict_t *pEntity, const char *pszName, const char *pszAddress, char szRejectReason[128])
 {
 	CRevoicePlayer *plr = GetPlayerByEdict(pEntity);
 	plr->OnConnected();
@@ -293,7 +295,12 @@ bool Revoice_Load()
 
 void PlayerPreThink(edict_t* pEntity)
 {
-	sended_voice[ENTINDEX(pEntity) - 1].clear();
+	/*
+	if (pEntity)
+	{
+		sended_voice[ENTINDEX(pEntity) - 1].clear();
+	}
+	*/
 }
 short int mix_sample(short int sample1, short int sample2) {
 	const int32_t result(static_cast<int32_t>(sample1) + static_cast<int32_t>(sample2));
@@ -649,7 +656,7 @@ void OnClientCommandReceiving(edict_t *pClient) {
 			RETURN_META(MRES_SUPERCEDE);
 		} else if (FStrEq(command, "VTC_CheckEnd")) {
 			plr->SetCodecType(plr->GetCheckingState() == 2 ? vct_opus : vct_speex);
-			plr->SetCheckingState(0);			
+			plr->SetCheckingState(0);	
 			RETURN_META(MRES_SUPERCEDE);
 		}
 	}
