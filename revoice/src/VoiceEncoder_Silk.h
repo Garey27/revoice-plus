@@ -16,6 +16,9 @@ private:
 	void * m_pDecoder;								/*    76     4 */
 	SKP_SILK_SDK_DecControlStruct m_decControl;		/*    80    20 */
 	int m_samplerate;
+	static const size_t MAX_INPUTFRAMES = 5;
+	static const size_t FRAMELENGTHMS = 20;
+	size_t m_minSamples;
 
 public:
 	VoiceEncoder_Silk();

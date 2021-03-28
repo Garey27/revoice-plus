@@ -10,7 +10,7 @@
             "type": "cppvsdbg",
             "request": "launch",            
             "program": "F:\\hlds\\hlds.exe",
-            "args": [ "-game", "cstrike", "+map", "de_dust2" ],            
+            "args": [ "-game", "cstrike", "+map", "de_dust2","-port","27016" ],            
             "stopAtEntry": false,
             "cwd": "F:\\hlds",
             "environment": [],
