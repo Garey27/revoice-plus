@@ -34,7 +34,6 @@ void CvarValue2_PreHook(const edict_t *pEnt, int requestID, const char *cvarName
 int TranscodeVoice(CRevoicePlayer *srcPlayer, char *srcBuf, int* srcBufLen, IVoiceCodec *srcCodec, IVoiceCodec *dstCodec, char *dstBuf, int dstBufSize)
 {
 	static char decodedBuf[32768];
-	static char resampleBuf[32768];
 
 	int numDecodedSamples = srcCodec->Decompress(srcBuf, *srcBufLen, decodedBuf, sizeof(decodedBuf));
 	if (numDecodedSamples <= 0) {
@@ -48,7 +47,7 @@ int TranscodeVoice(CRevoicePlayer *srcPlayer, char *srcBuf, int* srcBufLen, IVoi
 
 		SKP_Silk_resampler_state_struct resamplerState;
 		SKP_Silk_resampler_init(&resamplerState, inSampleRate, outSampleRate);
-		SKP_Silk_resampler(&resamplerState, (short*)resampleBuf, (short*)decodedBuf, numDecodedSamples/2);
+		SKP_Silk_resampler(&resamplerState, (short*)decodedBuf, (short*)decodedBuf, numDecodedSamples);
 		numDecodedSamples = outSampleCount;
 	}
   	g_OnDecompress(srcPlayer->GetClient()->GetId(), dstCodec->SampleRate(), reinterpret_cast<uint8_t*>(decodedBuf), reinterpret_cast<size_t*>(&numDecodedSamples));
@@ -642,7 +641,7 @@ void OnClientCommandReceiving(edict_t *pClient) {
 
 	if (FStrEq(command, "VTC_CheckStart")) {
 		plr->SetCheckingState(1);
-		plr->SetCodecType(vct_speex);
+		plr->SetCodecType(CodecType::vct_speex);
 		RETURN_META(MRES_SUPERCEDE);
 	} else if (plr->GetCheckingState()) {
 		if (FStrEq(command, "vgui_runscript")) {
