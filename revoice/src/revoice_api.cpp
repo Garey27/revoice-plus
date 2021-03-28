@@ -198,6 +198,7 @@ uint32_t RevoiceAPI::SoundAdd(std::shared_ptr<audio_wave> wave8k, std::shared_pt
 	g_audio_waves[g_numAudioWaves].FrameCodec = std::make_unique<VoiceCodec_Frame>(g_audio_waves[g_numAudioWaves].SpeexCodec.get());
 	g_audio_waves[g_numAudioWaves].SteamCodec->Init(5);	
 	g_audio_waves[g_numAudioWaves].SteamCodec->SetSteamid(76561197960265728ull + dis(gen));
+	g_audio_waves[g_numAudioWaves].SteamCodec->SetSampleRate(wave16k->sample_rate());
 	g_audio_waves[g_numAudioWaves].FrameCodec->Init(5);
 	
 	return g_numAudioWaves++;
