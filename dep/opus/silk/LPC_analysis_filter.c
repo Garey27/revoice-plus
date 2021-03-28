@@ -64,12 +64,12 @@ void silk_LPC_analysis_filter(
     const opus_int16 *in_ptr;
 #endif
 
-    celt_assert( d >= 6 );
-    celt_assert( (d & 1) == 0 );
-    celt_assert( d <= len );
+    silk_assert( d >= 6 );
+    silk_assert( (d & 1) == 0 );
+    silk_assert( d <= len );
 
 #if defined(FIXED_POINT) && USE_CELT_FIR
-    celt_assert( d <= SILK_MAX_ORDER_LPC );
+    silk_assert( d <= SILK_MAX_ORDER_LPC );
     for ( j = 0; j < d; j++ ) {
         num[ j ] = -B[ j ];
     }

@@ -52,12 +52,9 @@ void CRevoicePlayer::OnConnected()
 	m_SilkCodec->ResetState();
 	m_OpusCodec->ResetState();
 	m_SpeexCodec->ResetState();
-	auto clt = g_RehldsSvs->GetClient_t(m_Client->GetId());
-	if (clt)
-	{
-		m_SilkCodec->SetSteamid(clt->network_userid.m_SteamID);
-		m_OpusCodec->SetSteamid(clt->network_userid.m_SteamID);
-	}
+	m_SilkCodec->SetSteamid(m_Client->GetNetworkUserID()->m_SteamID);
+	m_OpusCodec->SetSteamid(m_Client->GetNetworkUserID()->m_SteamID);
+
 
 	// default codec
 	m_CodecType = GetCodecTypeByString(g_pcv_rev_default_codec->string);

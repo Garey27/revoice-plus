@@ -26,8 +26,8 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
     add_definitions(-D_CRT_SECURE_NO_WARNINGS)
     set( CMAKE_SHARED_LINKER_FLAGS "/EXPORT:GiveFnptrsToDll=_GiveFnptrsToDll@8" )
 else()
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fpermissive -w -include ${PROJECT_SOURCE_DIR}/force_link_glibc_2.13.h")
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive -w -include ${PROJECT_SOURCE_DIR}/force_link_glibc_2.13.h")
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fpermissive -w")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive -w")
 endif()
 
 
@@ -39,9 +39,9 @@ set(REVP_INCLUDE_DIRS
 	dep/metamod
 	revoice/public
 	revoice/src
-	dep/silk/include
+	dep/silk
 	dep/opus/include
-	dep/speex/include
+	dep/speex/speex
 	)
 
 set(REVP_SOURCES
@@ -68,11 +68,11 @@ set(REVP_SOURCES
 	)
 add_library(revoice_plus SHARED ${REVP_SOURCES})
 if (CMAKE_CXX_COMPILER_ID MATCHES "MSVC") 
-set(CMAKE_CXX_FLAGS_DEBUG "/nologo /Od /Oi- /Ob0 /Gy- /GS /ZI /await")
+set(CMAKE_CXX_FLAGS_DEBUG "/nologo /Od /Oi- /Ob0 /GS /ZI /await")
 set(CMAKE_SHARED_LINKER_FLAGS_DEBUG "/nologo /debug:fastlink /incremental /editandcontinue")
 endif()
 
-target_link_libraries(revoice_plus PRIVATE opus SILK Speex 	
+target_link_libraries(revoice_plus PRIVATE Opus SILK Speex 	
  	-static-libstdc++      
 	-ldl -lm)
 target_include_directories(revoice_plus PRIVATE ${REVP_INCLUDE_DIRS})

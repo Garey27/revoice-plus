@@ -44,6 +44,8 @@ int CSteamP2PCodec::StreamDecode(const char *pCompressed, int compressedBytes, c
 				if (readPos + 2 > maxReadPos) {
 					return 0;
 				}
+				uint16 sampleRate = *(uint16 *)readPos;
+				m_BackendCodec->SetSampleRate(sampleRate);
 				readPos += 2;
 				break;
 			}

@@ -26,9 +26,9 @@ public:
 	virtual int Decompress(const char *pCompressed, int compressedBytes, char *pUncompressed, int maxUncompressedBytes);
 	virtual bool ResetState();
 	virtual uint16_t SampleRate();
-	virtual void SetFrameSize(int frame_size)
+	virtual void SetSampleRate(uint16_t sampleRate)
 	{
-		m_BackendCodec->SetFrameSize(frame_size);
+		m_BackendCodec->SetSampleRate(sampleRate);
 	};
 	void SetClient(IGameClient *client);
 	void SetSteamid(uint64_t steamid)
