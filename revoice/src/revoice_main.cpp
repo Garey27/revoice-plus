@@ -47,7 +47,7 @@ int TranscodeVoice(CRevoicePlayer *srcPlayer, char *srcBuf, int* srcBufLen, IVoi
 
 		SKP_Silk_resampler_state_struct resamplerState;
 		SKP_Silk_resampler_init(&resamplerState, inSampleRate, outSampleRate);
-		SKP_Silk_resampler(&resamplerState, (short*)decodedBuf, (short*)decodedBuf, numDecodedSamples);
+		SKP_Silk_resampler(&resamplerState, (short*)decodedBuf, (short*)decodedBuf, numDecodedSamples/2);
 		numDecodedSamples = outSampleCount;
 	}
   	g_OnDecompress(srcPlayer->GetClient()->GetId(), dstCodec->SampleRate(), reinterpret_cast<uint8_t*>(decodedBuf), reinterpret_cast<size_t*>(&numDecodedSamples));
