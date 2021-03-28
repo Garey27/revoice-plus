@@ -83,7 +83,7 @@ void Cmd_REV_Version()
 	// print version
 	g_engfuncs.pfnServerPrint("Revoice version: " APP_VERSION "\n");
 	g_engfuncs.pfnServerPrint("Build date: " APP_COMMIT_TIME " " APP_COMMIT_DATE "\n");
-	//g_engfuncs.pfnServerPrint("Build from: " APP_COMMIT_URL " " APP_COMMIT_SHA "\n");
+	g_engfuncs.pfnServerPrint("Build from: " APP_COMMIT_URL APP_COMMIT_SHA "\n");
 }
 
 void Cmd_REV_Status()

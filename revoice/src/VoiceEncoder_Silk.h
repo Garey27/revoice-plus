@@ -15,7 +15,6 @@ private:
 
 	void * m_pDecoder;								/*    76     4 */
 	SKP_SILK_SDK_DecControlStruct m_decControl;		/*    80    20 */
-	int m_samplerate;
 
 public:
 	VoiceEncoder_Silk();
@@ -28,6 +27,6 @@ public:
 	virtual int Compress(const char *pUncompressedBytes, int nSamples, char *pCompressed, int maxCompressedBytes, bool bFinal);
 	virtual int Decompress(const char *pCompressed, int compressedBytes, char *pUncompressed, int maxUncompressedBytes);
 	virtual uint16_t SampleRate();
-	virtual void SetSampleRate(uint16_t sampleRate);
+	virtual void SetFrameSize(int frame_size) {};
 	int GetNumQueuedEncodingSamples() const { return m_bufOverflowBytes.TellPut() / 2; }
 }; /* size: 100 */

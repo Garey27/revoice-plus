@@ -16,9 +16,9 @@ public:
 	virtual bool ResetState();
 	virtual uint16_t SampleRate();
 
-	virtual void SetSampleRate(uint16_t sampleRate)
+	virtual void SetFrameSize(int frame_size)
 	{
-		m_pFrameEncoder->SetSampleRate(sampleRate);
+		m_pFrameEncoder->SetFrameSize(frame_size);
 	};
 	void SetClient(IGameClient *client) { m_Client = client; }
 

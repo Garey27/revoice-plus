@@ -12,5 +12,5 @@ public:
 	virtual void DecodeFrame(const char *pCompressed, char *pDecompressedBytes) = 0;
 	virtual bool ResetState() = 0;
 	virtual uint16_t SampleRate() = 0;
-	virtual void SetSampleRate(uint16_t sampleRate) = 0;
+	virtual void SetFrameSize(int frame_size) = 0;
 };

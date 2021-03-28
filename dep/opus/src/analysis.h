@@ -30,6 +30,7 @@
 
 #include "celt.h"
 #include "opus_private.h"
+#include "mlp.h"
 
 #define NB_FRAMES 8
 #define NB_TBANDS 18
@@ -55,6 +56,7 @@ typedef struct {
    int   mem_fill;                      /* number of usable samples in the buffer */
    float prev_band_tonality[NB_TBANDS];
    float prev_tonality;
+   int prev_bandwidth;
    float E[NB_FRAMES][NB_TBANDS];
    float logE[NB_FRAMES][NB_TBANDS];
    float lowE[NB_TBANDS];
@@ -63,28 +65,17 @@ typedef struct {
    float mem[32];
    float cmean[8];
    float std[9];
-   float music_prob;
-   float vad_prob;
    float Etracker;
    float lowECount;
    int E_count;
-   int last_music;
    int count;
    int analysis_offset;
-   /** Probability of having speech for time i to DETECT_SIZE-1 (and music before).
-       pspeech[0] is the probability that all frames in the window are speech. */
-   float pspeech[DETECT_SIZE];
-   /** Probability of having music for time i to DETECT_SIZE-1 (and speech before).
-       pmusic[0] is the probability that all frames in the window are music. */
-   float pmusic[DETECT_SIZE];
-   float speech_confidence;
-   float music_confidence;
-   int speech_confidence_count;
-   int music_confidence_count;
    int write_pos;
    int read_pos;
    int read_subframe;
    float hp_ener_accum;
+   int initialized;
+   float rnn_state[MAX_NEURONS];
    opus_val32 downmix_state[3];
    AnalysisInfo info[DETECT_SIZE];
 } TonalityAnalysisState;

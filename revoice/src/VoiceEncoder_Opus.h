@@ -4,25 +4,23 @@
 #include "utlbuffer.h"
 #include "opus.h"
 
-const int MAX_CHANNELS = 1;
-const int MAX_PACKET_LOSS = 10;
 
-class VoiceEncoder_Opus : public IVoiceCodec {
+class VoiceEncoder_Opus: public IVoiceCodec {
 private:
-	OpusEncoder* m_pEncoder;
-	OpusDecoder* m_pDecoder;
+	OpusEncoder *m_pEncoder;
+	OpusDecoder *m_pDecoder;
 	CUtlBuffer m_bufOverflowBytes;
 
 	int m_samplerate;
 	int m_bitrate;
 
-	int m_frameSize;
-	int m_MaxframeSize;
-
 	uint16 m_nEncodeSeq;
 	uint16 m_nDecodeSeq;
 
 	bool m_PacketLossConcealment;
+	int m_SampleLength;
+	int m_FrameSize;
+	int m_MaxFrameSize;
 
 public:
 	VoiceEncoder_Opus();
@@ -32,10 +30,10 @@ public:
 	virtual bool Init(int quality);
 	virtual void Release();
 	virtual bool ResetState();
-	virtual int Compress(const char* pUncompressedBytes, int nSamplesIn, char* pCompressed, int maxCompressedBytes, bool bFinal);
-	virtual int Decompress(const char* pCompressed, int compressedBytes, char* pUncompressed, int maxUncompressedBytes);
+	virtual int Compress(const char *pUncompressedBytes, int nSamplesIn, char *pCompressed, int maxCompressedBytes, bool bFinal);
+	virtual int Decompress(const char *pCompressed, int compressedBytes, char *pUncompressed, int maxUncompressedBytes);
 	virtual uint16_t SampleRate();
-	virtual void SetSampleRate(uint16_t sampleRate);
+	virtual void SetFrameSize(int frame_size);
 
 	int GetNumQueuedEncodingSamples() const { return m_bufOverflowBytes.TellPut() / BYTES_PER_SAMPLE; }
 };

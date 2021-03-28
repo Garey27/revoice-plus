@@ -29,5 +29,5 @@ public:
 	virtual bool ResetState() = 0;
 	// Sample rate
 	virtual uint16_t SampleRate() = 0;
-	virtual void SetSampleRate(uint16_t sampleRate) = 0;
+	virtual void SetFrameSize(int frame_size) = 0;
 };
