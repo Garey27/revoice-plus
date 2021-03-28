@@ -20,6 +20,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 add_subdirectory(dep/opus)
 add_subdirectory(dep/silk)
 add_subdirectory(dep/speex)
+add_subdirectory(dep/soxr)
 
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "MSVC") 
@@ -41,7 +42,8 @@ set(REVP_INCLUDE_DIRS
 	revoice/src
 	dep/silk
 	dep/opus/include
-	dep/speex/speex
+	dep/speex/speex	
+	dep/soxr/src
 	)
 
 set(REVP_SOURCES
@@ -72,7 +74,7 @@ set(CMAKE_CXX_FLAGS_DEBUG "/nologo /Od /Oi- /Ob0 /GS /ZI /await")
 set(CMAKE_SHARED_LINKER_FLAGS_DEBUG "/nologo /debug:fastlink /incremental /editandcontinue")
 endif()
 
-target_link_libraries(revoice_plus PRIVATE Opus SILK Speex 	
+target_link_libraries(revoice_plus PRIVATE Opus SILK Speex soxr
  	-static-libstdc++      
 	-ldl -lm)
 target_include_directories(revoice_plus PRIVATE ${REVP_INCLUDE_DIRS})

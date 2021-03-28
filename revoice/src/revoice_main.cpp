@@ -1,6 +1,6 @@
 #include "precompiled.h"
-#include "SKP_Silk_SigProc_FIX.h"
-
+//#include "SKP_Silk_SigProc_FIX.h"
+#include "soxr.h"
 //std::unordered_map<size_t, std::unordered_map<size_t, bool>> sended_voice;
 
 void SV_DropClient_hook(IRehldsHook_SV_DropClient *chain, IGameClient *cl, bool crash, const char *msg)
@@ -44,11 +44,13 @@ int TranscodeVoice(CRevoicePlayer *srcPlayer, char *srcBuf, int* srcBufLen, IVoi
 		size_t inSampleRate = srcCodec->SampleRate();
 		size_t outSampleRate = dstCodec->SampleRate();
 		size_t outSampleCount = size_t(ceil(double(numDecodedSamples) * (double(outSampleRate) / double(inSampleRate))));
-
-		SKP_Silk_resampler_state_struct resamplerState;
-		SKP_Silk_resampler_init(&resamplerState, inSampleRate, outSampleRate);
-		SKP_Silk_resampler(&resamplerState, (short*)decodedBuf, (short*)decodedBuf, numDecodedSamples/2);
-		numDecodedSamples = outSampleCount;
+		size_t odone;
+		soxr_runtime_spec_t _soxrRuntimeSpec = soxr_runtime_spec(2);
+		soxr_quality_spec_t _soxrQualitySpec = soxr_quality_spec(SOXR_VHQ, 0);
+		soxr_io_spec_t iospec = soxr_io_spec(SOXR_INT16, SOXR_INT16);
+		soxr_oneshot(inSampleRate, outSampleRate, 1, decodedBuf, numDecodedSamples, NULL, decodedBuf, sizeof(decodedBuf), &odone,
+		&iospec, &_soxrQualitySpec, &_soxrRuntimeSpec);
+		numDecodedSamples = odone;
 	}
   	g_OnDecompress(srcPlayer->GetClient()->GetId(), dstCodec->SampleRate(), reinterpret_cast<uint8_t*>(decodedBuf), reinterpret_cast<size_t*>(&numDecodedSamples));
 	
