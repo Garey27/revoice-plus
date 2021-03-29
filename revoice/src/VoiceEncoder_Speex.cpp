@@ -124,3 +124,8 @@ void VoiceEncoder_Speex::TermStates()
 
 	speex_bits_destroy(&m_Bits);
 }
+
+int VoiceEncoder_Speex::CodecType()
+{
+	return CSteamP2PCodec::PLT_Speex;
+}

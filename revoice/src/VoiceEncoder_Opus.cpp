@@ -1,6 +1,6 @@
 #include "precompiled.h"
 
-VoiceEncoder_Opus::VoiceEncoder_Opus() : m_bitrate(24000), m_samplerate(8000)
+VoiceEncoder_Opus::VoiceEncoder_Opus() : m_bitrate(96000), m_samplerate(24000)
 {
 	m_nEncodeSeq = 0;
 	m_nDecodeSeq = 0;
@@ -26,8 +26,8 @@ bool VoiceEncoder_Opus::Init(int quality)
 	m_nEncodeSeq = 0;
 	m_nDecodeSeq = 0;
 	m_PacketLossConcealment = true;
-	m_frameSize = m_samplerate/50;
-	m_MaxframeSize = m_frameSize*3;
+	m_frameSize = m_samplerate/1000*20;
+	m_MaxframeSize = m_frameSize;
 
 	int encSizeBytes = opus_encoder_get_size(MAX_CHANNELS);
 	m_pEncoder = (OpusEncoder *)malloc(encSizeBytes);
@@ -38,7 +38,7 @@ bool VoiceEncoder_Opus::Init(int quality)
 	}
 
 	opus_encoder_ctl((OpusEncoder *)m_pEncoder, OPUS_SET_BITRATE_REQUEST, m_bitrate);
-	opus_encoder_ctl((OpusEncoder *)m_pEncoder, OPUS_SET_SIGNAL_REQUEST, OPUS_SIGNAL_VOICE);
+	opus_encoder_ctl((OpusEncoder *)m_pEncoder, OPUS_SET_SIGNAL_REQUEST, OPUS_SIGNAL_MUSIC);
 	opus_encoder_ctl((OpusEncoder *)m_pEncoder, OPUS_SET_DTX_REQUEST, 1);
 
 	int decSizeBytes = opus_decoder_get_size(MAX_CHANNELS);
@@ -263,6 +263,11 @@ int VoiceEncoder_Opus::Decompress(const char *pCompressed, int compressedBytes, 
 uint16_t VoiceEncoder_Opus::SampleRate()
 {
 	return m_samplerate;
+}
+
+int VoiceEncoder_Opus::CodecType()
+{
+	return CSteamP2PCodec::PLT_OPUS_PLC;
 }
 
 void VoiceEncoder_Opus::SetSampleRate(uint16_t sampleRate)

@@ -30,6 +30,10 @@ public:
 	{
 		m_BackendCodec->SetSampleRate(sampleRate);
 	};
+	virtual int CodecType()
+	{
+		return m_BackendCodec->CodecType();
+	};
 	void SetClient(IGameClient *client);
 	void SetSteamid(uint64_t steamid)
 	{

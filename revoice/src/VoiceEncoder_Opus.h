@@ -36,6 +36,7 @@ public:
 	virtual int Decompress(const char* pCompressed, int compressedBytes, char* pUncompressed, int maxUncompressedBytes);
 	virtual uint16_t SampleRate();
 	virtual void SetSampleRate(uint16_t sampleRate);
+	virtual int CodecType() override;
 
 	int GetNumQueuedEncodingSamples() const { return m_bufOverflowBytes.TellPut() / BYTES_PER_SAMPLE; }
 };

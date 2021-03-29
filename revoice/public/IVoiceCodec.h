@@ -30,4 +30,5 @@ public:
 	// Sample rate
 	virtual uint16_t SampleRate() = 0;
 	virtual void SetSampleRate(uint16_t sampleRate) = 0;
+	virtual int CodecType() = 0;
 };

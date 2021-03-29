@@ -16,6 +16,8 @@ public:
 	virtual bool ResetState();
 	virtual uint16_t SampleRate();
 	virtual void SetSampleRate(uint16_t sampleRate) {};
+	virtual int CodecType();
+
 protected:
 	bool InitStates();
 	void TermStates();

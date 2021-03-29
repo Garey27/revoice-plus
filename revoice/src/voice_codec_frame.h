@@ -20,6 +20,10 @@ public:
 	{
 		m_pFrameEncoder->SetSampleRate(sampleRate);
 	};
+	virtual int CodecType()
+	{
+		return m_pFrameEncoder->CodecType();
+	};
 	void SetClient(IGameClient *client) { m_Client = client; }
 
 protected:

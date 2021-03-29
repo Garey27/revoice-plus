@@ -4,7 +4,7 @@ VoiceEncoder_Silk::VoiceEncoder_Silk()
 {
 	m_pEncoder = nullptr;
 	m_pDecoder = nullptr;
-	m_targetRate_bps = 25000;
+	m_targetRate_bps = 96000;
 	m_packetLoss_perc = 0;
 	m_samplerate = 24000;
 }
@@ -215,6 +215,11 @@ int VoiceEncoder_Silk::Decompress(const char *pCompressed, int compressedBytes, 
 	}
 
 	return (pWritePos - pUncompressed) / BYTES_PER_SAMPLE;
+}
+
+int VoiceEncoder_Silk::CodecType()
+{
+	return CSteamP2PCodec::PLT_Silk;
 }
 
 

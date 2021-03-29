@@ -96,7 +96,7 @@ int CSteamP2PCodec::StreamEncode(const char *pUncompressedBytes, int nSamples, c
   	*(uint16 *)writePos = m_BackendCodec->SampleRate();
 	writePos += 2;
 
-	*(writePos++) = PLT_Silk; // Voice payload
+	*(writePos++) = m_BackendCodec->CodecType(); // Voice payload
 
 	{
 		int compressRes = m_BackendCodec->Compress(pUncompressedBytes, nSamples, writePos + 2, maxCompressedBytes - (1 + 2 + 1 + 2), bFinal);

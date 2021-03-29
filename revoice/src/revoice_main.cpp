@@ -39,6 +39,7 @@ int TranscodeVoice(CRevoicePlayer *srcPlayer, char *srcBuf, int* srcBufLen, IVoi
 	if (numDecodedSamples <= 0) {
 		return 0;
 	}
+	UTIL_ServerPrintf("%d %d %d\n", srcCodec->SampleRate(), dstCodec->SampleRate(), dstCodec->CodecType());
 	if(srcCodec->SampleRate() != dstCodec->SampleRate())
 	{
 		size_t inSampleRate = srcCodec->SampleRate();
