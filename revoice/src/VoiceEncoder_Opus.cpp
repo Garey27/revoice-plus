@@ -38,7 +38,7 @@ bool VoiceEncoder_Opus::Init(int quality)
 	}
 
 	opus_encoder_ctl((OpusEncoder *)m_pEncoder, OPUS_SET_BITRATE_REQUEST, m_bitrate);
-	opus_encoder_ctl((OpusEncoder *)m_pEncoder, OPUS_SET_SIGNAL_REQUEST, OPUS_SIGNAL_MUSIC);
+	opus_encoder_ctl((OpusEncoder *)m_pEncoder, OPUS_SET_SIGNAL_REQUEST, OPUS_SIGNAL_VOICE);
 	opus_encoder_ctl((OpusEncoder *)m_pEncoder, OPUS_SET_DTX_REQUEST, 1);
 
 	int decSizeBytes = opus_decoder_get_size(MAX_CHANNELS);
@@ -48,7 +48,7 @@ bool VoiceEncoder_Opus::Init(int quality)
 		m_pDecoder = nullptr;
 		return false;
 	}
-
+	ResetState();
 	return true;
 }
 
@@ -59,6 +59,8 @@ void VoiceEncoder_Opus::Release()
 
 bool VoiceEncoder_Opus::ResetState()
 {
+	m_nDecodeSeq = 0;
+	m_nEncodeSeq = 0;
 	if (m_pEncoder) {
 		opus_encoder_ctl(m_pEncoder, OPUS_RESET_STATE);
 	}
@@ -90,8 +92,6 @@ int VoiceEncoder_Opus::Compress(const char *pUncompressedIn, int nSamplesIn, cha
 		buf.Put(pUncompressedIn, nSamplesIn * BYTES_PER_SAMPLE);
 		m_bufOverflowBytes.Clear();
 
-		nSamples = (buf.TellPut() / BYTES_PER_SAMPLE);
-		nSamplesRemaining = (buf.TellPut() / BYTES_PER_SAMPLE) % m_frameSize;
 
 		if (bFinal && nSamplesRemaining)
 		{
@@ -100,10 +100,10 @@ int VoiceEncoder_Opus::Compress(const char *pUncompressedIn, int nSamplesIn, cha
 			{
 				buf.PutShort(0);
 			}
-
-			nSamples = (buf.TellPut() / BYTES_PER_SAMPLE);
-			nSamplesRemaining = (buf.TellPut() / BYTES_PER_SAMPLE) % m_frameSize;
 		}
+
+		nSamples = (buf.TellPut() / BYTES_PER_SAMPLE);
+		nSamplesRemaining = (buf.TellPut() / BYTES_PER_SAMPLE) % m_frameSize;
 
 		pUncompressed = (char *)buf.Base();
 		Assert(!bFinal || nSamplesRemaining == 0);
@@ -131,7 +131,7 @@ int VoiceEncoder_Opus::Compress(const char *pUncompressedIn, int nSamplesIn, cha
 			int nBytes = ((pWritePosMax - pWritePos) < 0x7FFF) ? (pWritePosMax - pWritePos) : 0x7FFF;
 			int nWriteBytes = opus_encode(m_pEncoder, (const opus_int16 *)psRead, m_frameSize, (unsigned char *)pWritePos, nBytes);
 
-			psRead += m_MaxframeSize;
+			psRead += m_frameSize;
 			pWritePos += nWriteBytes;
 
 			nRemainingSamples--;
