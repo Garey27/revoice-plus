@@ -391,8 +391,8 @@ void StartFrame_PostHook()
 					size_t mix_samples = 0;
 					auto& s = g_audio_waves[i];
 					full_length = s.wave16k->sample_rate() / 50;
-					s.nextSend16k = now + std::chrono::milliseconds(1000 / 50) - std::chrono::microseconds((size_t)(1e6 / s.wave16k->sample_rate()));
 					auto ptr = (uint16_t*)s.wave16k->get_samples(full_length, &mix_samples);
+					s.nextSend16k = now + std::chrono::milliseconds((size_t)(mix_samples/(double)s.wave16k->sample_rate()*1000)) - std::chrono::microseconds((size_t)(1e6 / s.wave16k->sample_rate()));
 					if (mix.empty())
 					{
 						mix = { ptr , ptr + mix_samples };
@@ -430,8 +430,9 @@ void StartFrame_PostHook()
 
 				handled_sounds.insert(sound->first);
 				full_length = sound->second.wave16k->sample_rate() / 50;
-				sound->second.nextSend16k = now + std::chrono::milliseconds(1000 / 50) - std::chrono::microseconds((size_t)(1e6 / sound->second.wave16k->sample_rate()));
 				sample_buffer = sound->second.wave16k->get_samples(full_length, &n_samples);
+				sound->second.nextSend16k = now + std::chrono::milliseconds((size_t)(n_samples/(double)sound->second.wave16k->sample_rate()*1000)) - std::chrono::microseconds((size_t)(1e6 / sound->second.wave16k->sample_rate()));
+				
 				
 				silkDataLen = EncodeVoice(sound->second.senderClientIndex, reinterpret_cast<char*>(sample_buffer), n_samples, sound->second.SteamCodec.get(), silkBuf, sizeof(silkBuf));
 				if (sound->second.auto_delete)
@@ -525,8 +526,8 @@ void StartFrame_PostHook()
 					size_t mix_samples = 0;
 					auto& s = g_audio_waves[i];
 					full_length = s.wave8k->sample_rate() / 50;
-					s.nextSend8k = now + std::chrono::milliseconds(1000 / 50) - std::chrono::microseconds((size_t)(1e6 / sound->second.wave16k->sample_rate()));
 					auto ptr = (uint16_t*)s.wave8k->get_samples(full_length, &mix_samples);
+					s.nextSend8k = now + std::chrono::milliseconds((size_t)(mix_samples/(double)s.wave8k->sample_rate()*1000)) - std::chrono::microseconds((size_t)(1e6 / s.wave8k->sample_rate()));			
 					if (mix.empty())
 					{
 						mix = { ptr , ptr + mix_samples };
@@ -564,9 +565,10 @@ void StartFrame_PostHook()
 				using namespace std::chrono_literals;
 				handled_sounds.insert(sound->first);
 				int ms = 160;
-				full_length = sound->second.wave8k->sample_rate() / 6.25;
-				sound->second.nextSend8k = now + std::chrono::milliseconds((size_t)(1000 / 6.25)) - std::chrono::microseconds((size_t)(1e6 / sound->second.wave16k->sample_rate()));
+				full_length = sound->second.wave8k->sample_rate() / 50;
 				sample_buffer = sound->second.wave8k->get_samples(full_length, &n_samples);
+				sound->second.nextSend8k = now + std::chrono::milliseconds((size_t)(n_samples/(double)sound->second.wave8k->sample_rate()*1000)) - std::chrono::microseconds((size_t)(1e6 / sound->second.wave8k->sample_rate()));
+				
 
 				speexDataLen = EncodeVoice(sound->second.senderClientIndex, reinterpret_cast<char*>(sample_buffer), n_samples, sound->second.FrameCodec.get(), speexBuf, sizeof(speexBuf));
 				
