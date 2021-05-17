@@ -81,4 +81,4 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: revoice-plus_win32
-        path: ${{github.workspace}}/out/revoice_plus_mm.dll
+        path: ${{github.workspace}}/out/Release/revoice_plus_mm.dll
