@@ -15,7 +15,7 @@ void LCPrintf(bool critical, const char *fmt, ...)
 	bool bNeedWriteInConsole = critical;
 	bool bNeedWriteInLog = critical;
 
-	if (bNeedWriteInConsole && bNeedWriteInLog && g_RehldsSvs && g_RehldsSvs->IsLogActive())
+	if (bNeedWriteInConsole && g_RehldsSvs && g_RehldsSvs->IsLogActive())
 	{
 		if (pcv_mp_logecho && pcv_mp_logecho->value != 0.0)
 			bNeedWriteInConsole = false;
