@@ -468,7 +468,7 @@ void StartFrame_PostHook()
 
 				char* sendBuf = silkBuf;
 				int nSendLen = silkDataLen;
-				if (nSendLen == 0 || sendBuf == nullptr)
+				if (nSendLen == 0)
 					continue;
 				sizebuf_t* dstDatagram = client->GetDatagram();
 				if (dstDatagram->cursize + nSendLen + 4 < dstDatagram->maxsize) {
