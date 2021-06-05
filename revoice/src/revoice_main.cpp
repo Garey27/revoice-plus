@@ -38,7 +38,7 @@ bool TranscodeVoice(CRevoicePlayer *srcPlayer, std::vector<char> srcBuff, IVoice
 	static char transCodedBuf[32768];
 	char* decodedBuf;
 	int numDecodedSamples;
-	size_t origDecodedSamples = srcCodec->Decompress(srcBuff.data(), srcBuff.size(), originalBuf, sizeof(originalBuf));
+	int origDecodedSamples = srcCodec->Decompress(srcBuff.data(), srcBuff.size(), originalBuf, sizeof(originalBuf));
 	if (origDecodedSamples <= 0) {
 		return false;
 	}
