@@ -128,8 +128,8 @@ void Revoice_Update_Hltv(const char *pszNewValue)
 
 CRevoicePlayer *GetPlayerByIndex(const size_t clientId)
 {
-	if (clientId < 1 || clientId >= g_RehldsSvs->GetMaxClients() - 1) {
-		util_syserror("Invalid player edict id=%d\n", clientId);
+	if (clientId < 1 || clientId > g_RehldsSvs->GetMaxClients()) {
+		util_syserror("Invalid player index id=%d\n", clientId);
 	}
 
 	return &g_Players[ clientId - 1];
