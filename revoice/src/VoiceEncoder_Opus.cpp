@@ -37,10 +37,17 @@ bool VoiceEncoder_Opus::Init(int quality)
 		return false;
 	}
 
-	opus_encoder_ctl((OpusEncoder *)m_pEncoder, OPUS_SET_BITRATE_REQUEST, m_bitrate);
-	opus_encoder_ctl((OpusEncoder *)m_pEncoder, OPUS_SET_SIGNAL_REQUEST, OPUS_SIGNAL_VOICE);
-	opus_encoder_ctl((OpusEncoder *)m_pEncoder, OPUS_SET_DTX_REQUEST, 1);
-
+	opus_encoder_ctl(m_pEncoder, OPUS_SET_BITRATE_REQUEST, m_bitrate);
+	opus_encoder_ctl(m_pEncoder, OPUS_SET_SIGNAL_REQUEST, OPUS_SIGNAL_VOICE);
+	opus_encoder_ctl(m_pEncoder, OPUS_SET_BANDWIDTH(OPUS_BANDWIDTH_FULLBAND));
+	opus_encoder_ctl(m_pEncoder, OPUS_SET_VBR(1));
+	opus_encoder_ctl(m_pEncoder, OPUS_SET_COMPLEXITY(10));
+	opus_encoder_ctl(m_pEncoder, OPUS_SET_INBAND_FEC(1));
+	opus_encoder_ctl(m_pEncoder, OPUS_SET_FORCE_CHANNELS(MAX_CHANNELS));
+	opus_encoder_ctl(m_pEncoder, OPUS_SET_DTX(1));
+	opus_encoder_ctl(m_pEncoder, OPUS_SET_LSB_DEPTH(16));
+	opus_encoder_ctl(m_pEncoder, OPUS_SET_EXPERT_FRAME_DURATION(OPUS_FRAMESIZE_20_MS));
+	
 	int decSizeBytes = opus_decoder_get_size(MAX_CHANNELS);
 	m_pDecoder = (OpusDecoder *)malloc(decSizeBytes);
 	if (opus_decoder_init((OpusDecoder *)m_pDecoder, m_samplerate, MAX_CHANNELS) != OPUS_OK) {
