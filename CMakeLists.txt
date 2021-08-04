@@ -72,6 +72,7 @@ add_library(revoice_plus SHARED ${REVP_SOURCES})
 if (CMAKE_CXX_COMPILER_ID MATCHES "MSVC") 
 set(CMAKE_CXX_FLAGS_DEBUG "/nologo /Od /Oi- /Ob0 /GS /ZI /await")
 set(CMAKE_SHARED_LINKER_FLAGS_DEBUG "/nologo /debug:fastlink /incremental /editandcontinue")
+target_link_options(revoice_plus PRIVATE /MACHINE:X86 /EXPORT:GiveFnptrsToDll=_GiveFnptrsToDll@8)
 endif()
 
 target_link_libraries(revoice_plus PRIVATE Opus SILK Speex soxr

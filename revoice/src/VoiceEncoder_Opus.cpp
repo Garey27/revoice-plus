@@ -1,6 +1,6 @@
 #include "precompiled.h"
 
-VoiceEncoder_Opus::VoiceEncoder_Opus() : m_bitrate(96000), m_samplerate(24000)
+VoiceEncoder_Opus::VoiceEncoder_Opus() : m_bitrate(24000), m_samplerate(24000)
 {
 	m_nEncodeSeq = 0;
 	m_nDecodeSeq = 0;
