@@ -75,8 +75,9 @@ set(CMAKE_SHARED_LINKER_FLAGS_DEBUG "/nologo /debug:fastlink /incremental /edita
 target_link_options(revoice_plus PRIVATE /MACHINE:X86 /EXPORT:GiveFnptrsToDll=_GiveFnptrsToDll@8)
 endif()
 
-target_link_libraries(revoice_plus PRIVATE Opus SILK Speex soxr
- 	-static-libstdc++      
+target_link_libraries(revoice_plus PRIVATE Opus SILK Speex soxr 	
+ 	-static-libstdc++ 
+	-static-intel -no-intel-extensions   
 	-ldl -lm)
 target_include_directories(revoice_plus PRIVATE ${REVP_INCLUDE_DIRS})
 		
