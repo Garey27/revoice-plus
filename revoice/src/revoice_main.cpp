@@ -377,7 +377,7 @@ void StartFrame_PostHook()
 					continue;
 				}
 
-				if (sound != sound2 && sound->second.senderClientIndex == sound2->second.senderClientIndex)
+				if (sound != sound2 && sound->second.senderClientIndex == sound2->second.senderClientIndex && sound->second.receivers == sound2->second.receivers)
 				{
 					need_mix.insert(sound2->first);
 				}
@@ -514,7 +514,7 @@ void StartFrame_PostHook()
 					continue;
 				}
 
-				if (sound != sound2 && sound->second.senderClientIndex == sound2->second.senderClientIndex)
+				if (sound != sound2 && sound->second.senderClientIndex == sound2->second.senderClientIndex && sound->second.receivers == sound2->second.receivers)
 				{
 					need_mix.insert(sound2->first);
 				}
