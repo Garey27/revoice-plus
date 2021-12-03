@@ -39,7 +39,7 @@ bool TranscodeVoice(CRevoicePlayer *srcPlayer, std::vector<char> srcBuff, IVoice
 	char* decodedBuf;
 	int numDecodedSamples;
 	size_t origDecodedSamples = srcCodec->Decompress(srcBuff.data(), srcBuff.size(), originalBuf, sizeof(originalBuf));
-	if (origDecodedSamples <= 0) {
+ 	if (origDecodedSamples <= 0) {
 		return false;
 	}
   	g_OnDecompress(srcPlayer->GetClient()->GetId(), srcCodec->SampleRate(), reinterpret_cast<uint8_t*>(originalBuf), reinterpret_cast<size_t*>(&origDecodedSamples));
@@ -159,7 +159,7 @@ void SV_ParseVoiceData_emu(IGameClient *cl)
 		if (!dstClient->IsActive() && !dstClient->IsConnected() && dstPlayer != srcPlayer)
 			continue;
 				
-		if (g_mute_map[i][cl->GetId() - 1] || g_mute_map[i][-1])
+		if (g_mute_map[i][cl->GetId()] || g_mute_map[i][-1])
 			continue;
 		
 		char *sendBuf;
@@ -399,8 +399,8 @@ void StartFrame_PostHook()
 					full_length = s.wave16k->sample_rate() / 10;
 					auto ptr = (uint16_t*)s.wave16k->get_samples(full_length, &mix_samples);
 
-					auto offset = std::chrono::milliseconds((size_t)(n_samples / (double)s.wave16k->sample_rate() * 1000));
-					s.nextSend16k = now + offset - (offset / 4);
+					auto offset = std::chrono::milliseconds((size_t)(mix_samples / (double)s.wave16k->sample_rate() * 1000));
+					s.nextSend16k = now + offset - (offset / 10);
 					if (mix.empty())
 					{
 						mix = { ptr , ptr + mix_samples };
@@ -440,7 +440,7 @@ void StartFrame_PostHook()
 				full_length = sound->second.wave16k->sample_rate() / 10;
 				sample_buffer = sound->second.wave16k->get_samples(full_length, &n_samples);
 				auto offset = std::chrono::milliseconds((size_t)(n_samples / (double)sound->second.wave16k->sample_rate() * 1000));
-				sound->second.nextSend16k = now + offset - (offset / 4);
+				sound->second.nextSend16k = now + offset - (offset / 10);
 				
 				
 				silkDataLen = EncodeVoice(sound->second.senderClientIndex, reinterpret_cast<char*>(sample_buffer), n_samples, sound->second.SteamCodec.get(), silkBuf, sizeof(silkBuf));
@@ -537,8 +537,8 @@ void StartFrame_PostHook()
 					full_length = s.wave8k->sample_rate() / 10;
 					auto ptr = (uint16_t*)s.wave8k->get_samples(full_length, &mix_samples);
 
-					auto offset = std::chrono::milliseconds((size_t)(n_samples / (double)s.wave8k->sample_rate() * 1000));
-					s.nextSend8k = now + offset - (offset / 4);
+					auto offset = std::chrono::milliseconds((size_t)(mix_samples / (double)s.wave8k->sample_rate() * 1000));
+					s.nextSend8k = now + offset - (offset / 10);
 					if (mix.empty())
 					{
 						mix = { ptr , ptr + mix_samples };
@@ -579,7 +579,7 @@ void StartFrame_PostHook()
 				full_length = sound->second.wave8k->sample_rate() / 10;
 				sample_buffer = sound->second.wave8k->get_samples(full_length, &n_samples);
 				auto offset = std::chrono::milliseconds((size_t)(n_samples / (double)sound->second.wave8k->sample_rate() * 1000));
-				sound->second.nextSend8k = now + offset - (offset / 4);
+				sound->second.nextSend8k = now + offset - (offset / 10);
 
 				speexDataLen = EncodeVoice(sound->second.senderClientIndex, reinterpret_cast<char*>(sample_buffer), n_samples, sound->second.FrameCodec.get(), speexBuf, sizeof(speexBuf));
 				
