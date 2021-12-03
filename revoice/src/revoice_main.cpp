@@ -185,8 +185,7 @@ void SV_ParseVoiceData_emu(IGameClient *cl)
 			continue;
 
 		if (dstPlayer == srcPlayer && !dstClient->GetLoopback())
-			nSendLen = 0;
-
+			continue;
 		
 		sizebuf_t *dstDatagram = dstClient->GetDatagram();
 		if (dstDatagram->cursize + nSendLen + 4 < dstDatagram->maxsize) {
@@ -350,12 +349,19 @@ void StartFrame_PostHook()
 			handled_sounds.insert(sound->first);
 			g_OnSoundComplete(sound->first);
 			// in case some forward delete sound from map
+
+			if (sound->second.auto_delete)
+			{
+				g_audio_waves.erase(sound->first);
+			}
+
 			if (g_audio_waves.empty())
 			{
 				break;
 			}
 			end = g_audio_waves.end();
 			sound = g_audio_waves.begin();
+
 			continue;
 		}
 		
@@ -390,7 +396,7 @@ void StartFrame_PostHook()
 					handled_sounds.insert(i);
 					size_t mix_samples = 0;
 					auto& s = g_audio_waves[i];
-					full_length = s.wave16k->sample_rate() / 50;
+					full_length = s.wave16k->sample_rate() / 10;
 					auto ptr = (uint16_t*)s.wave16k->get_samples(full_length, &mix_samples);
 					s.nextSend16k = now + std::chrono::milliseconds((size_t)(mix_samples/(double)s.wave16k->sample_rate()*1000)) - std::chrono::microseconds((size_t)(1e6 / s.wave16k->sample_rate()));
 					if (mix.empty())
@@ -429,9 +435,10 @@ void StartFrame_PostHook()
 			{
 
 				handled_sounds.insert(sound->first);
-				full_length = sound->second.wave16k->sample_rate() / 50;
+				full_length = sound->second.wave16k->sample_rate() / 10;
 				sample_buffer = sound->second.wave16k->get_samples(full_length, &n_samples);
-				sound->second.nextSend16k = now + std::chrono::milliseconds((size_t)(n_samples/(double)sound->second.wave16k->sample_rate()*1000)) - std::chrono::microseconds((size_t)(1e6 / sound->second.wave16k->sample_rate()));
+				auto test = std::chrono::milliseconds((size_t)(n_samples / (double)sound->second.wave16k->sample_rate() * 1000));
+				sound->second.nextSend16k = now + test;
 				
 				
 				silkDataLen = EncodeVoice(sound->second.senderClientIndex, reinterpret_cast<char*>(sample_buffer), n_samples, sound->second.SteamCodec.get(), silkBuf, sizeof(silkBuf));
@@ -525,7 +532,7 @@ void StartFrame_PostHook()
 					handled_sounds.insert(i);
 					size_t mix_samples = 0;
 					auto& s = g_audio_waves[i];
-					full_length = s.wave8k->sample_rate() / 50;
+					full_length = s.wave8k->sample_rate() / 10;
 					auto ptr = (uint16_t*)s.wave8k->get_samples(full_length, &mix_samples);
 					s.nextSend8k = now + std::chrono::milliseconds((size_t)(mix_samples/(double)s.wave8k->sample_rate()*1000)) - std::chrono::microseconds((size_t)(1e6 / s.wave8k->sample_rate()));			
 					if (mix.empty())
@@ -565,7 +572,7 @@ void StartFrame_PostHook()
 				using namespace std::chrono_literals;
 				handled_sounds.insert(sound->first);
 				int ms = 160;
-				full_length = sound->second.wave8k->sample_rate() / 50;
+				full_length = sound->second.wave8k->sample_rate() / 10;
 				sample_buffer = sound->second.wave8k->get_samples(full_length, &n_samples);
 				sound->second.nextSend8k = now + std::chrono::milliseconds((size_t)(n_samples/(double)sound->second.wave8k->sample_rate()*1000)) - std::chrono::microseconds((size_t)(1e6 / sound->second.wave8k->sample_rate()));
 				
