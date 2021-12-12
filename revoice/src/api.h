@@ -75,7 +75,7 @@ public:
 		PLAY_DONE
 	};
 	play_state state;
-	uint32_t senderClientIndex;
+	uint8_t senderClientIndex;
 	std::unordered_set<size_t> receivers;
 	bool auto_delete = false;
 	float flPlayPos8k;

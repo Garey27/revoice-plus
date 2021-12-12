@@ -107,9 +107,9 @@ void SV_ParseVoiceData_emu(IGameClient *cl)
 		return;
 	if (!srcPlayer->IsSpeaking())
 	{
-		srcPlayer->Speak();
 		g_OnClientStartSpeak(cl->GetId());
 	}
+	srcPlayer->Speak();
 	srcPlayer->SetLastVoiceTime(g_RehldsSv->GetTime());
 	srcPlayer->IncreaseVoiceRate(nDataLength);
 
