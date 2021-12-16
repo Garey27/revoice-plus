@@ -107,7 +107,7 @@ void SV_ParseVoiceData_emu(IGameClient *cl)
 		return;
 	if (!srcPlayer->IsSpeaking())
 	{
-		g_OnClientStartSpeak(cl->GetId());
+		g_OnClientStartSpeak(cl->GetId()+1);
 	}
 	srcPlayer->Speak();
 	srcPlayer->SetLastVoiceTime(g_RehldsSv->GetTime());
@@ -327,7 +327,7 @@ void StartFrame_PostHook()
 		if (!player->CheckSpeaking() && player->IsSpeaking())
 		{
 			player->SpeakDone();
-			g_OnClientStopSpeak(i);
+			g_OnClientStopSpeak(client->GetId()+1);
 		}
 	}	
 	auto end = g_audio_waves.end();
