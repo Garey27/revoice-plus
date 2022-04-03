@@ -39,3 +39,4 @@
 
 #include "revoice_api.h"
 #include "api.h"
+#include "struct.h"

@@ -6,7 +6,7 @@ Event<size_t> g_OnClientStartSpeak;
 Event<size_t> g_OnClientStopSpeak;
 
 Event<size_t, uint16_t, uint8_t*, size_t*> g_OnDecompress;
-Event<uint32_t> g_OnSoundComplete;
+Event<uint32_t, uint32_t> g_OnSoundComplete;
 
 VoiceTranscoderAPI g_voiceTranscoderAPI;
 RevoiceAPI g_revoiceAPI;
@@ -148,7 +148,7 @@ IEvent<size_t, uint16_t, uint8_t*, size_t*>& RevoiceAPI::OnDecompress()
 {
 	return g_OnDecompress;
 };
-IEvent<uint32_t>& RevoiceAPI::OnSoundComplete()
+IEvent<uint32_t, uint32_t>& RevoiceAPI::OnSoundComplete()
 {
 	return g_OnSoundComplete;
 };
@@ -189,11 +189,10 @@ bool RevoiceAPI::IsClientMuted(size_t clientIndex, size_t receiverIndex)
 
 uint32_t RevoiceAPI::SoundAdd(std::shared_ptr<audio_wave> wave8k, std::shared_ptr<audio_wave> wave16k)
 {
-	g_audio_waves[g_numAudioWaves].wave16k = wave16k;
-	g_audio_waves[g_numAudioWaves].wave8k = wave8k;
-	g_audio_waves[g_numAudioWaves].state		= audio_wave_play::PLAY_STOP;
+	g_audio_waves[g_numAudioWaves].wave16k = std::make_unique< audio_wave>(*wave16k);
+	g_audio_waves[g_numAudioWaves].wave8k = std::make_unique< audio_wave>(*wave8k);
 	g_audio_waves[g_numAudioWaves].SpeexCodec = std::make_unique<VoiceEncoder_Speex>();
-	g_audio_waves[g_numAudioWaves].SilkCodec	= std::make_unique<VoiceEncoder_Silk>();
+	g_audio_waves[g_numAudioWaves].SilkCodec	= std::make_unique<VoiceEncoder_Opus>();
 	g_audio_waves[g_numAudioWaves].SteamCodec	= std::make_unique<CSteamP2PCodec>(g_audio_waves[g_numAudioWaves].SilkCodec.get());
 	g_audio_waves[g_numAudioWaves].FrameCodec = std::make_unique<VoiceCodec_Frame>(g_audio_waves[g_numAudioWaves].SpeexCodec.get());
 	g_audio_waves[g_numAudioWaves].SteamCodec->Init(5);	
@@ -211,52 +210,82 @@ void RevoiceAPI::SoundDelete(uint32_t wave_id)
 
 void RevoiceAPI::SoundPlay(size_t senderClientIndex, size_t receiverClientIndex, uint32_t wave_id)
 {
-	auto found = g_audio_waves.find(wave_id);
-	if(found != g_audio_waves.end())
+	auto found_sound = g_audio_waves.find(wave_id);
+	if(found_sound != g_audio_waves.end())
 	{
-		if(senderClientIndex == 0)
-			found->second.senderClientIndex = 32;
+		if (senderClientIndex == 0)
+		{
+			found_sound->second.senderClientIndex = 32;
+		}
 		else
-			found->second.senderClientIndex = senderClientIndex - 1;
-		found->second.receivers.insert(receiverClientIndex - 1);
-		found->second.state = audio_wave_play::PLAY_PLAY;
+			found_sound->second.senderClientIndex = senderClientIndex - 1;
+		if (receiverClientIndex)
+		{
+			found_sound->second.receivers[receiverClientIndex - 1].nextSend = std::chrono::high_resolution_clock::now();
+			found_sound->second.receivers[receiverClientIndex - 1].state = PLAY_PLAY;
+		}
+		else
+		{
+			for (int i = 0, maxclients = g_RehldsSvs->GetMaxClients(); i < maxclients; i++)
+			{
+				CRevoicePlayer* pClient = &g_Players[i];
+				if (!pClient || !pClient->GetClient()->IsActive() || !pClient->GetClient()->IsConnected())
+				{
+					found_sound->second.receivers.erase(i);
+					continue;
+				}
+				found_sound->second.receivers[i].nextSend = std::chrono::high_resolution_clock::now();
+				found_sound->second.receivers[i].state = PLAY_PLAY;
+			}
+		}
 	}
 };
-void RevoiceAPI::SoundPause(uint32_t wave_id)
+void RevoiceAPI::SoundPause(uint8_t receiverClientIndex, uint32_t wave_id)
 {
 	auto found = g_audio_waves.find(wave_id);
-	if (found != g_audio_waves.end())
+	if (found != g_audio_waves.end() && found->second.receivers.find(receiverClientIndex - 1) != found->second.receivers.end())
 	{
-		found->second.state = audio_wave_play::PLAY_PAUSE;
+		found->second.receivers[receiverClientIndex - 1].state = PLAY_PAUSE;
 	}
 };
-void RevoiceAPI::SoundStop(uint32_t wave_id)
+void RevoiceAPI::SoundStop(uint8_t receiverClientIndex, uint32_t wave_id)
 {
 	auto found = g_audio_waves.find(wave_id);
-	if (found != g_audio_waves.end())
+	if (found != g_audio_waves.end() && found->second.receivers.find(receiverClientIndex - 1) != found->second.receivers.end())
 	{
-		found->second.state = audio_wave_play::PLAY_STOP;
-		found->second.flPlayPos8k = 0.f;
-		found->second.flPlayPos16k = 0.f;
+		found->second.receivers[receiverClientIndex - 1].state = PLAY_STOP;
+		found->second.receivers[receiverClientIndex - 1].current_pos = 0;
 	}
 };
-void RevoiceAPI::SoundSeek(uint32_t wave_id, float seek, audio_wave::seekParam seekParam)
+void RevoiceAPI::SoundSeek(uint8_t receiverClientIndex, uint32_t wave_id, float seek, seekParam seekParam)
 {
 	auto found = g_audio_waves.find(wave_id);
-	if (found != g_audio_waves.end())
+	if (found != g_audio_waves.end() && found->second.receivers.find(receiverClientIndex - 1) != found->second.receivers.end())
 	{
-		found->second.wave8k->seek(seek, seekParam);
-		found->second.flPlayPos8k = found->second.wave8k->tell();
-		found->second.wave16k->seek(seek, seekParam);
-		found->second.flPlayPos16k = found->second.wave16k->tell();
+		CRevoicePlayer* pClient = GetPlayerByIndex(receiverClientIndex);
+		if (!pClient)
+			return;
+
+		auto& wave = (pClient->GetCodecType() == vct_speex) ? found->second.wave8k : found->second.wave16k;
+		auto totalLen = wave->length();
+		size_t pos = wave->num_frames() * std::min(seek, totalLen) / totalLen;
+
+		found->second.receivers[receiverClientIndex - 1].seek(pos, wave->num_frames(), seekParam);
 	}
 };
-float RevoiceAPI::SoundTell(uint32_t wave_id)
+float RevoiceAPI::SoundTell(uint8_t receiverClientIndex, uint32_t wave_id)
 {
 	auto found = g_audio_waves.find(wave_id);
-	if (found != g_audio_waves.end())
+	if (found != g_audio_waves.end() && found->second.receivers.find(receiverClientIndex - 1) != found->second.receivers.end())
 	{
-		return found->second.flPlayPos16k;
+		CRevoicePlayer* pClient = GetPlayerByIndex(receiverClientIndex);
+		if (!pClient || !pClient->GetClient()->IsActive() || !pClient->GetClient()->IsConnected())
+			return -1.0f;
+
+		auto& wave = (pClient->GetCodecType() == vct_speex) ? found->second.wave8k : found->second.wave16k;
+		float pos =  std::min(found->second.receivers[receiverClientIndex - 1].current_pos, wave->num_frames()) / wave->num_frames();
+		
+		return pos * wave->length();
 	}
 	return -1.0f;
 };
@@ -313,19 +342,16 @@ void RevoiceAPI::SoundPush(uint32_t wave_id, std::shared_ptr<audio_wave> wave8k 
 		uint16_t* data;
 		auto n_frames = wave16k->get_frames(&data);
 		found->second.wave16k->push_frames(data, n_frames);
-		found->second.flPlayPos16k =  found->second.wave16k->tell();
 		n_frames = wave8k->get_frames(&data);
 		found->second.wave8k->push_frames(data, n_frames);
-		found->second.flPlayPos8k = found->second.wave8k->tell();
 	}
 
 }
-void RevoiceAPI::SoundAutoDelete(uint32_t wave_id)
+void RevoiceAPI::SoundAutoClear(uint32_t wave_id)
 {
 	auto found = g_audio_waves.find(wave_id);
 	if (found != g_audio_waves.end())
 	{
-		found->second.auto_delete = true;
-	}
-	
+		found->second.auto_clear = true;
+	}	
 }

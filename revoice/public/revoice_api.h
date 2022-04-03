@@ -1,12 +1,13 @@
 #pragma once
 #include <memory>
+#include <mutex>
 #include <vector>
 const char VOICETRANSCODER_VERSION[] = "2017RC5";
 
 const size_t VOICETRANSCODER_API_VERSION_MAJOR = 3;
 const size_t VOICETRANSCODER_API_VERSION_MINOR = 1;
 
-const size_t REVOICE_API_VERSION_MAJOR = 1;
+const size_t REVOICE_API_VERSION_MAJOR = 2;
 const size_t REVOICE_API_VERSION_MINOR = 0;
 template <typename ...T>
 class IEvent {
@@ -19,19 +20,27 @@ public:
 	virtual void operator-=(handler_t callback) = 0;
 };
 
+enum play_state
+{
+	PLAY_STOP,
+	PLAY_PAUSE,
+	PLAY_PLAY,
+	PLAY_DONE
+};
+
+enum seekParam
+{
+	seekHead,
+	seekCurr,
+	seekTail
+};
+
 class audio_wave
 {
-public:
-	enum seekParam
-	{
-		seekHead,
-		seekCurr,
-		seekTail
-	};
+	static inline std::mutex g_i_mutex;  // protects g_i
 private:
 	unsigned channels;
 	unsigned sample_rate_;
-	size_t current_pos;
 	float wav_length;
 	std::vector<uint16_t> data_;
 public:
@@ -41,41 +50,11 @@ public:
 	{
 		
 		wav_length = static_cast<float>(samples_count) / sampleRate / channels;
-		current_pos = 0;
 	}
-	void seek(size_t pos, seekParam seekType)
+	~audio_wave()
 	{
-		switch (seekType)
-		{
-		case seekHead:
-			if (pos > 0)
-				current_pos = pos;
-			else
-				current_pos = 0;
-
-			break;
-		case seekCurr:
-			if (pos > 0)
-				current_pos += pos;
-			else
-				current_pos -= pos;
-
-			break;
-		case seekTail:
-			if (pos > 0)
-				current_pos = wav_length * sample_rate_;
-			else
-				current_pos -= pos;
-
-			break;
-		}
+		data_.clear();
 	}
-
-	float tell() const
-	{
-		return (float)current_pos / sample_rate_ / channels;
-	}
-
 	unsigned sample_rate() const
 	{
 		return sample_rate_;
@@ -89,15 +68,19 @@ public:
 	{
 		return wav_length;
 	}
-	uint8_t* get_samples(uint32_t length, size_t* n_samples)
+	uint8_t* get_samples(size_t pos, uint32_t length, size_t* n_samples)
 	{
 		*n_samples = length * channels;
-		if (current_pos + *n_samples > data_.size())
+		if (pos + *n_samples > data_.size())
 		{
-			*n_samples = (data_.size() - current_pos);
+			*n_samples = (data_.size() - pos);
 		}
 
-		return (uint8_t*)(data_.data() + current_pos);
+		return (uint8_t*)(data_.data() + pos);
+	}
+	size_t num_frames()
+	{
+		return data_.size();
 	}
 	size_t get_frames(uint16_t** data)
 	{
@@ -129,7 +112,7 @@ public:
 	virtual IEvent<size_t>& OnClientStartSpeak() = 0;
 	virtual IEvent<size_t>& OnClientStopSpeak() = 0;
 	virtual IEvent<size_t, uint16_t, uint8_t*, size_t*>& OnDecompress() = 0;
-	virtual IEvent<uint32_t>& OnSoundComplete() = 0;
+	virtual IEvent<uint32_t, uint32_t>& OnSoundComplete() = 0;
 
 	virtual void MuteClient(size_t clientIndex, size_t receiverIndex = 0) = 0;
 	virtual void UnmuteClient(size_t clientIndex, size_t receiverIndex = 0) = 0;
@@ -137,12 +120,12 @@ public:
 	virtual uint32_t SoundAdd(std::shared_ptr<audio_wave> wave8k, std::shared_ptr<audio_wave> wave16k) = 0;
 	virtual void SoundPush(uint32_t wave_id, std::shared_ptr<audio_wave> wave8k, std::shared_ptr<audio_wave> wave16k) = 0;
 	virtual void SoundDelete(uint32_t wave_id) = 0;
-	virtual void SoundAutoDelete(uint32_t wave_id) = 0;
+	virtual void SoundAutoClear(uint32_t wave_id) = 0;
 	virtual void SoundPlay(size_t senderClientIndex, size_t receiverClientIndex, uint32_t wave_id) = 0;
-	virtual void SoundPause(uint32_t wave_id) = 0;
-	virtual void SoundStop(uint32_t wave_id) = 0;
-	virtual void SoundSeek(uint32_t wave_id, float seek, audio_wave::seekParam seekParam) = 0;
-	virtual float SoundTell(uint32_t wave_id) = 0;
+	virtual void SoundPause(uint8_t receiverClientIndex, uint32_t wave_id) = 0;
+	virtual void SoundStop(uint8_t receiverClientIndex, uint32_t wave_id) = 0;
+	virtual void SoundSeek(uint8_t receiverClientIndex, uint32_t wave_id, float seek, seekParam seekParam) = 0;
+	virtual float SoundTell(uint8_t receiverClientIndex, uint32_t wave_id) = 0;
 	virtual float SoundLength(uint32_t wave_id) = 0;
 
 	virtual void BlockClient(size_t clientIndex) = 0;

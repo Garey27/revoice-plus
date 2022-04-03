@@ -64,30 +64,53 @@ public:
 extern Event<size_t> g_OnClientStartSpeak;
 extern Event<size_t> g_OnClientStopSpeak;
 
+
+struct receiver_state
+{
+	play_state state;
+	std::chrono::high_resolution_clock::time_point nextSend;
+	size_t current_pos;
+	void seek(size_t pos, size_t totalLength, seekParam seekType)
+	{
+		switch (seekType)
+		{
+		case seekHead:
+			if (pos > 0)
+				current_pos = pos;
+			else
+				current_pos = 0;
+
+			break;
+		case seekCurr:
+			if (pos > 0)
+				current_pos += pos;
+			else
+				current_pos -= pos;
+
+			break;
+		case seekTail:
+			if (pos > 0)
+				current_pos = totalLength;
+			else
+				current_pos -= pos;
+
+			break;
+		}
+	}
+};
 class audio_wave_play
 {
 public:
-	enum play_state
-	{
-		PLAY_STOP,
-		PLAY_PAUSE,
-		PLAY_PLAY,
-		PLAY_DONE
-	};
-	play_state state;
 	uint8_t senderClientIndex;
-	std::unordered_set<size_t> receivers;
-	bool auto_delete = false;
-	float flPlayPos8k;
-	float flPlayPos16k;
-	std::unique_ptr<VoiceEncoder_Silk> SilkCodec;
+	std::unordered_map<uint8_t, receiver_state> receivers;
+	bool auto_clear = false;
+	bool check_clear = true;
+	std::unique_ptr<VoiceEncoder_Opus> SilkCodec;
 	std::unique_ptr<VoiceEncoder_Speex> SpeexCodec;
 	std::unique_ptr<CSteamP2PCodec> SteamCodec;
 	std::unique_ptr<VoiceCodec_Frame> FrameCodec;
-	std::shared_ptr<audio_wave> wave8k;
-	std::shared_ptr<audio_wave> wave16k;
-	std::chrono::high_resolution_clock::time_point nextSend8k;
-	std::chrono::high_resolution_clock::time_point nextSend16k;
+	std::unique_ptr<audio_wave> wave8k;
+	std::unique_ptr<audio_wave> wave16k;
 };
 
 class RevoiceAPI final : public IRevoiceApi {
@@ -103,7 +126,7 @@ public:
 	IEvent<size_t>& OnClientStopSpeak() override;
 
 	IEvent<size_t, uint16_t, uint8_t*, size_t*>& OnDecompress() override;
-	IEvent<uint32_t>& OnSoundComplete() override;
+	IEvent<uint32_t, uint32_t>& OnSoundComplete() override;
 
 	void MuteClient(size_t clientIndex, size_t receiverIndex = 0) override;
 	void UnmuteClient(size_t clientIndex, size_t receiverIndex = 0) override;
@@ -112,12 +135,12 @@ public:
 	uint32_t SoundAdd(std::shared_ptr<audio_wave> wave8k, std::shared_ptr<audio_wave> wave16k) override;
 	void SoundPush(uint32_t wave_id, std::shared_ptr<audio_wave> wave8k, std::shared_ptr<audio_wave> wave16k) override;
 	void SoundDelete(uint32_t wave_id) override;
-	void SoundAutoDelete(uint32_t wave_id) override;
+	void SoundAutoClear(uint32_t wave_id) override;
 	void SoundPlay(size_t senderClientIndex, size_t receiverClientIndex, uint32_t wave_id) override;
-	void SoundPause(uint32_t wave_id) override;
-	void SoundStop(uint32_t wave_id) override;
-	void SoundSeek(uint32_t wave_id, float seek, audio_wave::seekParam seekParam) override;
-	float SoundTell(uint32_t wave_id) override;
+	void SoundPause(uint8_t receiverClientIndex, uint32_t wave_id) override;
+	void SoundStop(uint8_t receiverClientIndex, uint32_t wave_id) override;
+	void SoundSeek(uint8_t receiverClientIndex, uint32_t wave_id, float seek, seekParam seekParam) override;
+	float SoundTell(uint8_t receiverClientIndex, uint32_t wave_id) override;
 	float SoundLength(uint32_t wave_id) override;
 
 	void BlockClient(size_t clientIndex) override;
@@ -129,7 +152,7 @@ extern Event<size_t> g_OnREClientStartSpeak;
 extern Event<size_t> g_OnREClientStopSpeak;
 
 extern Event<size_t, uint16_t, uint8_t*, size_t*> g_OnDecompress;
-extern Event<uint32_t> g_OnSoundComplete;
+extern Event<uint32_t, uint32_t> g_OnSoundComplete;
 extern VoiceTranscoderAPI g_voiceTranscoderAPI;
 extern RevoiceAPI g_revoiceAPI;
 extern std::unordered_map<uint8_t, std::unordered_map<uint8_t, bool>> g_mute_map;

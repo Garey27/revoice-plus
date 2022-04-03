@@ -1,6 +1,6 @@
 #include "precompiled.h"
 
-VoiceEncoder_Opus::VoiceEncoder_Opus() : m_bitrate(24000), m_samplerate(24000)
+VoiceEncoder_Opus::VoiceEncoder_Opus() : m_bitrate(96000), m_samplerate(24000)
 {
 	m_nEncodeSeq = 0;
 	m_nDecodeSeq = 0;
@@ -31,7 +31,7 @@ bool VoiceEncoder_Opus::Init(int quality)
 
 	int encSizeBytes = opus_encoder_get_size(MAX_CHANNELS);
 	m_pEncoder = (OpusEncoder *)malloc(encSizeBytes);
-	if (opus_encoder_init((OpusEncoder *)m_pEncoder, m_samplerate, MAX_CHANNELS, OPUS_APPLICATION_VOIP) != OPUS_OK) {
+	if (opus_encoder_init((OpusEncoder *)m_pEncoder, m_samplerate, MAX_CHANNELS, OPUS_APPLICATION_AUDIO) != OPUS_OK) {
 		free(m_pEncoder);
 		m_pEncoder = nullptr;
 		return false;

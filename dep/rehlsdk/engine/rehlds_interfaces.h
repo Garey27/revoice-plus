@@ -36,7 +36,6 @@ class IGameClient;
 
 #include "common_rehlds.h"
 #include "userid_rehlds.h"
-
 #ifdef REHLDS_SELF
 #include "server.h"
 #endif

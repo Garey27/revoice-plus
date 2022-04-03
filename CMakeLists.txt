@@ -36,6 +36,7 @@ set(REVP_INCLUDE_DIRS
 	dep/rehlsdk/common 
 	dep/rehlsdk/engine 
 	dep/rehlsdk/dlls
+	dep/rehlsdk/pm_shared
 	dep/rehlsdk/public
 	dep/metamod
 	revoice/public
