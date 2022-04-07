@@ -37,8 +37,6 @@ enum seekParam
 
 class audio_wave
 {
-	static inline std::mutex g_i_mutex;  // protects g_i
-private:
 	unsigned channels;
 	unsigned sample_rate_;
 	float wav_length;
