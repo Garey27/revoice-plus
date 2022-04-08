@@ -460,8 +460,8 @@ void StartFrame_PostHook()
 						auto ptr = (uint16_t*)wave->get_samples(receiver.current_pos, full_length, &mix_samples);
 
 						auto offset = std::chrono::milliseconds((size_t)(mix_samples / (double)wave->sample_rate() * 1000));					// idk
-						auto latency = std::chrono::high_resolution_clock::now() - now;
-						receiver.nextSend = std::chrono::high_resolution_clock::now() + offset - latency;
+						
+						receiver.nextSend = now + offset - (offset / 10);
 						if (mix.empty())
 						{
 							mix = { ptr , ptr + mix_samples };
@@ -498,8 +498,7 @@ void StartFrame_PostHook()
 					
 					data_length = EncodeVoice(sound->second.senderClientIndex, reinterpret_cast<char*>(sample_buffer), n_samples, codec, voiceBuff, sizeof(voiceBuff), false);
 					// idk
-					auto latency = std::chrono::high_resolution_clock::now() - now;
-					receiver.nextSend = std::chrono::high_resolution_clock::now() + offset-latency;
+					receiver.nextSend = now + offset - (offset/10);
 					receiver.current_pos += n_samples;
 				}
 
