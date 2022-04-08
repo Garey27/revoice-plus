@@ -76,7 +76,7 @@ int EncodeVoice(size_t senderId, char* srcBuf, int srcBufLen, IVoiceCodec* dstCo
 	if(callCallback)
 		g_OnDecompress(senderId, dstCodec->SampleRate(), reinterpret_cast<uint8_t*>(srcBuf), reinterpret_cast<size_t*>(&srcBufLen));
 
-	int compressedSize = dstCodec->Compress(srcBuf, srcBufLen, dstBuf, dstBufSize, true);
+	int compressedSize = dstCodec->Compress(srcBuf, srcBufLen, dstBuf, dstBufSize, false);
 	if (compressedSize <= 0) {
 		return 0;
 	}
