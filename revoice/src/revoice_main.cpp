@@ -405,7 +405,7 @@ void StartFrame_PostHook()
 
 			auto& receiver = sound->second.receivers[i];
 			auto& wave = (player->GetCodecType() == vct_speex) ? sound->second.wave8k : sound->second.wave16k;
-			IVoiceCodec* codec = (player->GetCodecType() == vct_speex) ? (IVoiceCodec*)sound->second.FrameCodec.get() : (IVoiceCodec*)sound->second.SteamCodec.get();
+			IVoiceCodec* codec = (player->GetCodecType() == vct_speex) ? (IVoiceCodec*)receiver.FrameCodec.get() : (IVoiceCodec*)receiver.SteamCodec.get();
 
 			if (receiver.state != play_state::PLAY_PLAY)
 			{
@@ -460,8 +460,8 @@ void StartFrame_PostHook()
 						auto ptr = (uint16_t*)wave->get_samples(receiver.current_pos, full_length, &mix_samples);
 
 						auto offset = std::chrono::milliseconds((size_t)(mix_samples / (double)wave->sample_rate() * 1000));					// idk
-						
-						receiver.nextSend = now + offset - (offset / 10);
+						auto latency = std::chrono::high_resolution_clock::now() - now;
+						receiver.nextSend = std::chrono::high_resolution_clock::now() + offset - latency;
 						if (mix.empty())
 						{
 							mix = { ptr , ptr + mix_samples };
@@ -485,7 +485,7 @@ void StartFrame_PostHook()
 						receiver.current_pos += mix_samples;
 						
 					}
-					data_length = EncodeVoice(sound->second.senderClientIndex, reinterpret_cast<char*>(mix.data()), mix.size(), sound->second.SteamCodec.get(), voiceBuff, sizeof(voiceBuff), false);
+					data_length = EncodeVoice(sound->second.senderClientIndex, reinterpret_cast<char*>(mix.data()), mix.size(), receiver.SteamCodec.get(), voiceBuff, sizeof(voiceBuff), false);
 				}
 				else
 				{
@@ -498,7 +498,8 @@ void StartFrame_PostHook()
 					
 					data_length = EncodeVoice(sound->second.senderClientIndex, reinterpret_cast<char*>(sample_buffer), n_samples, codec, voiceBuff, sizeof(voiceBuff), false);
 					// idk
-					receiver.nextSend = now + offset - (offset/10);
+					auto latency = std::chrono::high_resolution_clock::now() - now;
+					receiver.nextSend = std::chrono::high_resolution_clock::now() + offset-latency;
 					receiver.current_pos += n_samples;
 				}
 

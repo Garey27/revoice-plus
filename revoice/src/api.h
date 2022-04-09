@@ -67,6 +67,10 @@ extern Event<size_t> g_OnClientStopSpeak;
 
 struct receiver_state
 {
+	std::unique_ptr<VoiceEncoder_Opus> SilkCodec;
+	std::unique_ptr<VoiceEncoder_Speex> SpeexCodec;
+	std::unique_ptr<CSteamP2PCodec> SteamCodec;
+	std::unique_ptr<VoiceCodec_Frame> FrameCodec;
 	play_state state;
 	std::chrono::high_resolution_clock::time_point nextSend;
 	size_t current_pos;
@@ -105,10 +109,6 @@ public:
 	std::unordered_map<uint8_t, receiver_state> receivers;
 	bool auto_clear = false;
 	bool check_clear = true;
-	std::unique_ptr<VoiceEncoder_Opus> SilkCodec;
-	std::unique_ptr<VoiceEncoder_Speex> SpeexCodec;
-	std::unique_ptr<CSteamP2PCodec> SteamCodec;
-	std::unique_ptr<VoiceCodec_Frame> FrameCodec;
 	std::unique_ptr<audio_wave> wave8k;
 	std::unique_ptr<audio_wave> wave16k;
 };
