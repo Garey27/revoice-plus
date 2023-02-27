@@ -8,7 +8,7 @@ class VoiceEncoder_Silk : public IVoiceCodec {
 private:
 	void * m_pEncoder;								/*     4     4 */
 	//int m_API_fs_Hz;								/*     8     4 */
-	int m_targetRate_bps;							/*    12     4 */
+	int m_bitrate;									/*    12     4 */
 	int m_packetLoss_perc;							/*    16     4 */
 	SKP_SILK_SDK_EncControlStruct m_encControl;		/*    20    32 */
 	CUtlBuffer m_bufOverflowBytes;					/*    52    24 */
@@ -32,6 +32,7 @@ public:
 	virtual int Decompress(const char *pCompressed, int compressedBytes, char *pUncompressed, int maxUncompressedBytes);
 	virtual uint16_t SampleRate();
 	virtual void SetSampleRate(uint16_t sampleRate);
+	virtual void SetBitRate(float bitRate);
 	virtual int CodecType() override;
 	int GetNumQueuedEncodingSamples() const { return m_bufOverflowBytes.TellPut() / 2; }
 }; /* size: 100 */

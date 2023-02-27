@@ -20,3 +20,4 @@ void Cmd_REV_Version();
 extern cvar_t *g_pcv_sv_voiceenable;
 extern cvar_t *g_pcv_rev_hltv_codec;
 extern cvar_t *g_pcv_rev_default_codec;
+extern cvar_t* g_pcv_rev_bitrate;

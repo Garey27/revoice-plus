@@ -4,7 +4,7 @@ VoiceEncoder_Silk::VoiceEncoder_Silk()
 {
 	m_pEncoder = nullptr;
 	m_pDecoder = nullptr;
-	m_targetRate_bps = 96000;
+	m_bitrate = 10000;
 	m_packetLoss_perc = 0;
 	m_samplerate = 24000;
 }
@@ -23,7 +23,7 @@ VoiceEncoder_Silk::~VoiceEncoder_Silk()
 
 bool VoiceEncoder_Silk::Init(int quality)
 {
-	m_targetRate_bps = 96000;
+	m_bitrate = 10000;
 	m_packetLoss_perc = 0;
 
 	int encSizeBytes;
@@ -113,7 +113,7 @@ int VoiceEncoder_Silk::Compress(const char *pUncompressedIn, int nSamplesIn, cha
 		this->m_encControl.complexity = 2;
 		this->m_encControl.packetSize = inSampleRate/50;
 		this->m_encControl.packetLossPercentage = this->m_packetLoss_perc;
-		this->m_encControl.bitRate = (m_targetRate_bps >= 0) ? m_targetRate_bps : 0;
+		this->m_encControl.bitRate = (m_bitrate >= 0) ? m_bitrate : 0;
 
 		nSamples -= nSamplesToEncode;
 
@@ -222,11 +222,38 @@ int VoiceEncoder_Silk::CodecType()
 	return CSteamP2PCodec::PLT_Silk;
 }
 
+void VoiceEncoder_Silk::SetBitRate(float bitRate)
+{
+	if (bitRate != m_bitrate)
+	{
+		m_bitrate = bitRate;
+		if (m_pEncoder) {
+			free(m_pEncoder);
+			m_pEncoder = nullptr;
+		}
+
+		if (m_pDecoder) {
+			free(m_pDecoder);
+			m_pDecoder = nullptr;
+		}
+		Init(10);
+	}
+}
 
 void VoiceEncoder_Silk::SetSampleRate(uint16_t sampleRate)
 {
-	if(sampleRate != m_samplerate)
-	{		
+	if (sampleRate != m_samplerate)
+	{
 		m_samplerate = sampleRate;
+		if (m_pEncoder) {
+			free(m_pEncoder);
+			m_pEncoder = nullptr;
+		}
+
+		if (m_pDecoder) {
+			free(m_pDecoder);
+			m_pDecoder = nullptr;
+		}
+		Init(10);
 	}
 }

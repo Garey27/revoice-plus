@@ -30,6 +30,10 @@ public:
 	{
 		m_BackendCodec->SetSampleRate(sampleRate);
 	};
+	virtual void SetBitRate(float bitRate)
+	{
+		m_BackendCodec->SetBitRate(bitRate);
+	};
 	virtual int CodecType()
 	{
 		return m_BackendCodec->CodecType();

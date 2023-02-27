@@ -30,6 +30,8 @@ void CRevoicePlayer::Initialize(IGameClient *cl)
 {
 	m_Client = cl;
 
+	m_SilkCodec->SetBitRate(g_pcv_rev_bitrate->value);
+	m_OpusCodec->SetBitRate(g_pcv_rev_bitrate->value);
 	m_SpeexCodec->SetClient(cl);
 	m_SilkCodec ->SetClient(cl);
 	m_OpusCodec ->SetClient(cl);
@@ -111,6 +113,17 @@ void Revoice_Update_Players(const char *pszNewValue)
 		auto plr = &g_Players[i];
 		if (plr->IsConnected()) {
 			plr->Update();
+		}
+	}
+}
+
+void Revoice_Update_Bitrate(const char* pszNewValue)
+{
+	for (int i = 0; i < g_RehldsSvs->GetMaxClients(); i++) {
+		auto plr = &g_Players[i];
+		if (plr->IsConnected()) {
+			plr->GetOpusCodec()->SetBitRate(g_pcv_rev_bitrate->value);
+			plr->GetSilkCodec()->SetBitRate(g_pcv_rev_bitrate->value);
 		}
 	}
 }

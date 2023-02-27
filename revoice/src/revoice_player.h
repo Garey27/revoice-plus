@@ -14,9 +14,6 @@ private:
 	CSteamP2PCodec* m_SilkCodec;
 	CSteamP2PCodec* m_OpusCodec;
 	VoiceCodec_Frame* m_SpeexCodec;
-	CSteamP2PCodec* m_SilkAudioCodec;
-	CSteamP2PCodec* m_OpusAudioCodec;
-	VoiceCodec_Frame* m_SpeexAudioCodec;
 	int m_Protocol;
 	int m_VoiceRate;
 	int m_RequestId;
@@ -54,9 +51,6 @@ public:
 	CSteamP2PCodec* GetSilkCodec() const { return m_SilkCodec; }
 	CSteamP2PCodec* GetOpusCodec() const { return m_OpusCodec; }
 	VoiceCodec_Frame* GetSpeexCodec() const { return m_SpeexCodec; }
-	CSteamP2PCodec* GetSilkAudioCodec() const { return m_SilkAudioCodec; }
-	CSteamP2PCodec* GetOpusAudioCodec() const { return m_OpusAudioCodec; }
-	VoiceCodec_Frame* GetSpeexAudioCodec() const { return m_SpeexAudioCodec; }
 	IGameClient* GetClient() const { return m_Client; }
 	void Mute() { m_IsMuted_Old = true; }
 	void UnMute() { m_IsMuted_Old = false; }
@@ -94,5 +88,6 @@ CRevoicePlayer* GetPlayerByClientPtr(IGameClient* cl);
 CRevoicePlayer* GetPlayerByEdict(const edict_t* ed);
 
 void Revoice_Init_Players();
+void Revoice_Update_Bitrate(const char* pszNewValue);
 void Revoice_Update_Players(const char* pszNewValue);
 void Revoice_Update_Hltv(const char* pszNewValue);

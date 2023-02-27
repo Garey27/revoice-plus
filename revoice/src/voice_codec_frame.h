@@ -20,6 +20,10 @@ public:
 	{
 		m_pFrameEncoder->SetSampleRate(sampleRate);
 	};
+	virtual void SetBitRate(float bitrate)
+	{
+		m_pFrameEncoder->SetBitRate(bitrate);
+	};
 	virtual int CodecType()
 	{
 		return m_pFrameEncoder->CodecType();

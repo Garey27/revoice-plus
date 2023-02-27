@@ -1,6 +1,6 @@
 #include "precompiled.h"
 
-VoiceEncoder_Opus::VoiceEncoder_Opus() : m_bitrate(96000), m_samplerate(24000)
+VoiceEncoder_Opus::VoiceEncoder_Opus() : m_bitrate(10000), m_samplerate(24000)
 {
 	m_nEncodeSeq = 0;
 	m_nDecodeSeq = 0;
@@ -280,6 +280,24 @@ void VoiceEncoder_Opus::SetSampleRate(uint16_t sampleRate)
 	if(sampleRate != m_samplerate)
 	{		
 		m_samplerate = sampleRate;
+		if (m_pEncoder) {
+			free(m_pEncoder);
+			m_pEncoder = nullptr;
+		}
+
+		if (m_pDecoder) {
+			free(m_pDecoder);
+			m_pDecoder = nullptr;
+		}
+		Init(10);
+	}
+}
+
+void VoiceEncoder_Opus::SetBitRate(float bitRate)
+{
+	if (bitRate != m_bitrate)
+	{
+		m_bitrate = bitRate;
 		if (m_pEncoder) {
 			free(m_pEncoder);
 			m_pEncoder = nullptr;
