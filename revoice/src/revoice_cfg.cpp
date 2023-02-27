@@ -59,7 +59,7 @@ void Revoice_Init_Cvars()
 
 	g_RehldsFuncs->AddCvarListener(g_cv_rev_hltv_codec.name, Revoice_Update_Hltv);
 	g_RehldsFuncs->AddCvarListener(g_cv_rev_default_codec.name, Revoice_Update_Players);
-	g_RehldsFuncs->AddCvarListener(g_cv_rev_default_codec.name, Revoice_Update_Bitrate);
+	g_RehldsFuncs->AddCvarListener(g_cv_rev_bitrate.name, Revoice_Update_Bitrate);
 
 	
 }

@@ -249,7 +249,8 @@ void RevoiceAPI::SoundPlay(size_t senderClientIndex, size_t receiverClientIndex,
 					found_sound->second.receivers[i].FrameCodec = std::make_unique<VoiceCodec_Frame>(found_sound->second.receivers[i].SpeexCodec.get());
 					found_sound->second.receivers[i].SteamCodec->Init(5);
 					found_sound->second.receivers[i].SteamCodec->SetSteamid(76561197960265728ull + dis(gen));
-					found_sound->second.receivers[i].SteamCodec->SetSampleRate(found_sound->second.wave16k->sample_rate());
+					found_sound->second.receivers[i].SteamCodec->SetSampleRate(found_sound->second.wave16k->sample_rate());												
+					found_sound->second.receivers[i].SteamCodec->SetBitRate(g_pcv_rev_bitrate->value);
 					found_sound->second.receivers[i].FrameCodec->Init(5);
 				}
 			}
