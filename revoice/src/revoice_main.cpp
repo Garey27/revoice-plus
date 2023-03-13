@@ -42,7 +42,7 @@ bool TranscodeVoice(CRevoicePlayer* srcPlayer, std::vector<char> srcBuff, IVoice
 	if (origDecodedSamples <= 0) {
 		return false;
 	}
-	g_OnDecompress(srcPlayer->GetClient()->GetId(), srcCodec->SampleRate(), reinterpret_cast<uint8_t*>(originalBuf), reinterpret_cast<size_t*>(&origDecodedSamples));
+	g_OnDecompress(srcPlayer->GetClient()->GetId(), -1, srcCodec->SampleRate(), reinterpret_cast<uint8_t*>(originalBuf), reinterpret_cast<size_t*>(&origDecodedSamples));
 	for (auto& c : codecBuffers)
 	{
 		decodedBuf = originalBuf;
@@ -71,10 +71,10 @@ bool TranscodeVoice(CRevoicePlayer* srcPlayer, std::vector<char> srcBuff, IVoice
 	return true;
 }
 
-int EncodeVoice(size_t senderId, char* srcBuf, int srcBufLen, IVoiceCodec* dstCodec, char* dstBuf, int dstBufSize, bool callCallback = true)
+int EncodeVoice(size_t senderId, size_t receiverId, char* srcBuf, int srcBufLen, IVoiceCodec* dstCodec, char* dstBuf, int dstBufSize, bool callCallback = true)
 {
 	if(callCallback)
-		g_OnDecompress(senderId, dstCodec->SampleRate(), reinterpret_cast<uint8_t*>(srcBuf), reinterpret_cast<size_t*>(&srcBufLen));
+		g_OnDecompress(senderId, receiverId, dstCodec->SampleRate(), reinterpret_cast<uint8_t*>(srcBuf), reinterpret_cast<size_t*>(&srcBufLen));
 
 	int compressedSize = dstCodec->Compress(srcBuf, srcBufLen, dstBuf, dstBufSize, false);
 	if (compressedSize <= 0) {
@@ -485,7 +485,7 @@ void StartFrame_PostHook()
 						receiver.current_pos += mix_samples;
 						
 					}
-					data_length = EncodeVoice(sound->second.senderClientIndex, reinterpret_cast<char*>(mix.data()), mix.size(), receiver.SteamCodec.get(), voiceBuff, sizeof(voiceBuff), true);
+					data_length = EncodeVoice(sound->second.senderClientIndex, client->GetId() + 1, reinterpret_cast<char*>(mix.data()), mix.size(), receiver.SteamCodec.get(), voiceBuff, sizeof(voiceBuff), true);
 				}
 				else
 				{
@@ -496,7 +496,7 @@ void StartFrame_PostHook()
 					auto offset = std::chrono::microseconds((uint64_t)((n_samples / (double)wave->sample_rate()) * 1000000ull));
 					auto cl = g_RehldsSvs->GetClient_t(i);	
 					
-					data_length = EncodeVoice(sound->second.senderClientIndex, reinterpret_cast<char*>(sample_buffer), n_samples, codec, voiceBuff, sizeof(voiceBuff), true);
+					data_length = EncodeVoice(sound->second.senderClientIndex, client->GetId() + 1, reinterpret_cast<char*>(sample_buffer), n_samples, codec, voiceBuff, sizeof(voiceBuff), true);
 					// idk
 					auto latency = std::chrono::high_resolution_clock::now() - now;
 					receiver.nextSend = std::chrono::high_resolution_clock::now() + offset-latency;

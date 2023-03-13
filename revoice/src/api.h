@@ -125,7 +125,7 @@ public:
 	IEvent<size_t>& OnClientStartSpeak() override;
 	IEvent<size_t>& OnClientStopSpeak() override;
 
-	IEvent<size_t, uint16_t, uint8_t*, size_t*>& OnDecompress() override;
+	IEvent<size_t, size_t, uint16_t, uint8_t*, size_t*>& OnDecompress() override;
 	IEvent<uint32_t, uint32_t>& OnSoundComplete() override;
 
 	void MuteClient(size_t clientIndex, size_t receiverIndex = 0) override;
@@ -151,7 +151,7 @@ public:
 extern Event<size_t> g_OnREClientStartSpeak;
 extern Event<size_t> g_OnREClientStopSpeak;
 
-extern Event<size_t, uint16_t, uint8_t*, size_t*> g_OnDecompress;
+extern Event<size_t, size_t, uint16_t, uint8_t*, size_t*> g_OnDecompress;
 extern Event<uint32_t, uint32_t> g_OnSoundComplete;
 extern VoiceTranscoderAPI g_voiceTranscoderAPI;
 extern RevoiceAPI g_revoiceAPI;

@@ -5,7 +5,7 @@
 Event<size_t> g_OnClientStartSpeak;
 Event<size_t> g_OnClientStopSpeak;
 
-Event<size_t, uint16_t, uint8_t*, size_t*> g_OnDecompress;
+Event<size_t, size_t, uint16_t, uint8_t*, size_t*> g_OnDecompress;
 Event<uint32_t, uint32_t> g_OnSoundComplete;
 
 VoiceTranscoderAPI g_voiceTranscoderAPI;
@@ -144,7 +144,7 @@ IEvent<size_t>& RevoiceAPI::OnClientStopSpeak()
 	return g_OnClientStopSpeak;
 };
 
-IEvent<size_t, uint16_t, uint8_t*, size_t*>& RevoiceAPI::OnDecompress()
+IEvent<size_t, size_t, uint16_t, uint8_t*, size_t*>& RevoiceAPI::OnDecompress()
 {
 	return g_OnDecompress;
 };

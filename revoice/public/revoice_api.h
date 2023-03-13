@@ -109,7 +109,7 @@ public:
 
 	virtual IEvent<size_t>& OnClientStartSpeak() = 0;
 	virtual IEvent<size_t>& OnClientStopSpeak() = 0;
-	virtual IEvent<size_t, uint16_t, uint8_t*, size_t*>& OnDecompress() = 0;
+	virtual IEvent<size_t, size_t, uint16_t, uint8_t*, size_t*>& OnDecompress() = 0;
 	virtual IEvent<uint32_t, uint32_t>& OnSoundComplete() = 0;
 
 	virtual void MuteClient(size_t clientIndex, size_t receiverIndex = 0) = 0;
