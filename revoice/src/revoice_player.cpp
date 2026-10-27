@@ -39,6 +39,9 @@ void CRevoicePlayer::Initialize(IGameClient *cl)
 
 void CRevoicePlayer::OnConnected()
 {
+	// Счётчик провалов декодирования не должен переезжать через реконнект.
+	m_iDecodeFails = 0;
+
 	// already connected, suppose now there is a change of level?
 	if (m_Connected) {
 		m_VoiceRate = 0;
@@ -76,6 +79,7 @@ void CRevoicePlayer::OnConnected()
 
 void CRevoicePlayer::OnDisconnected()
 {
+	m_iDecodeFails = 0;
 	m_HLTV = false;
 	m_Connected = false;
 	m_Protocol = 0;

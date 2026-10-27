@@ -37,11 +37,17 @@ cvar_t g_cv_rev_hltv_codec    = { "REV_HltvCodec", "opus", 0, 0.0f, nullptr };
 cvar_t g_cv_rev_default_codec = { "REV_DefaultCodec", "speex", 0, 0.0f, nullptr };
 cvar_t g_cv_rev_bitrate = { "REV_Bitrate", "10000", 10000, 10000.0f, nullptr };
 cvar_t g_cv_rev_version       = { "revoice_version", APP_VERSION, FCVAR_SERVER, 0.0f, nullptr };
+// Отладка фризов: 0 — выкл (без накладных), 1 — только медленные пакеты, 2 — каждый пакет.
+cvar_t g_cv_rev_debug    = { "REV_Debug", "0", 0, 0.0f, nullptr };
+// Порог «медленного» пакета, мс.
+cvar_t g_cv_rev_debug_ms = { "REV_DebugMs", "5", 5, 5.0f, nullptr };
 
 cvar_t	*g_pcv_rev_hltv_codec    = nullptr;
 cvar_t	*g_pcv_rev_bitrate		 = nullptr;
 cvar_t  *g_pcv_rev_default_codec = nullptr;
 cvar_t	*g_pcv_sv_voiceenable    = nullptr;
+cvar_t  *g_pcv_rev_debug         = nullptr;
+cvar_t  *g_pcv_rev_debug_ms      = nullptr;
 
 void Revoice_Init_Cvars()
 {
@@ -51,11 +57,15 @@ void Revoice_Init_Cvars()
 	g_engfuncs.pfnCvar_RegisterVariable(&g_cv_rev_hltv_codec);
 	g_engfuncs.pfnCvar_RegisterVariable(&g_cv_rev_default_codec);
 	g_engfuncs.pfnCvar_RegisterVariable(&g_cv_rev_bitrate);
+	g_engfuncs.pfnCvar_RegisterVariable(&g_cv_rev_debug);
+	g_engfuncs.pfnCvar_RegisterVariable(&g_cv_rev_debug_ms);
 
 	g_pcv_sv_voiceenable = g_engfuncs.pfnCVarGetPointer("sv_voiceenable");
 	g_pcv_rev_hltv_codec = g_engfuncs.pfnCVarGetPointer(g_cv_rev_hltv_codec.name);
 	g_pcv_rev_default_codec = g_engfuncs.pfnCVarGetPointer(g_cv_rev_default_codec.name);
 	g_pcv_rev_bitrate = g_engfuncs.pfnCVarGetPointer(g_cv_rev_bitrate.name);
+	g_pcv_rev_debug = g_engfuncs.pfnCVarGetPointer(g_cv_rev_debug.name);
+	g_pcv_rev_debug_ms = g_engfuncs.pfnCVarGetPointer(g_cv_rev_debug_ms.name);
 
 	g_RehldsFuncs->AddCvarListener(g_cv_rev_hltv_codec.name, Revoice_Update_Hltv);
 	g_RehldsFuncs->AddCvarListener(g_cv_rev_default_codec.name, Revoice_Update_Players);

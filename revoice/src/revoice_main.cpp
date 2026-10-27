@@ -1,11 +1,39 @@
 #include "precompiled.h"
 //#include "SKP_Silk_SigProc_FIX.h"
 #include "soxr.h"
+#include "revoice_debug.h"
 //std::unordered_map<size_t, std::unordered_map<size_t, bool>> sended_voice;
+
+// П1: отложенная рассылка OnClientStartSpeak.
+// Флаг ставится в обработчике сетевого пакета, а событие рассылается в StartFrame_PostHook,
+// чтобы подписчики (AMXX, баны, статистика) не тормозили разбор clc_voicedata.
+static bool g_speakPending[MAX_PLAYERS];
+
+// RAII-гард реентерабельности разбора голосового пакета для одного игрока.
+// Буферы игрока общие между пакетами: повторный вход перетёр бы их.
+struct ScopedVoiceBusy
+{
+	explicit ScopedVoiceBusy(bool& flag) : m_flag(flag) { m_flag = true; }
+	~ScopedVoiceBusy() { m_flag = false; }
+	ScopedVoiceBusy(const ScopedVoiceBusy&) = delete;
+	ScopedVoiceBusy& operator=(const ScopedVoiceBusy&) = delete;
+private:
+	bool& m_flag;
+};
+
+// Цель транскодирования: кодек и буфер, куда складывать результат.
+struct CodecTarget
+{
+	IVoiceCodec* codec;
+	std::vector<char>* out;
+};
 
 void SV_DropClient_hook(IRehldsHook_SV_DropClient* chain, IGameClient* cl, bool crash, const char* msg)
 {
 	CRevoicePlayer* plr = GetPlayerByClientPtr(cl);
+
+	// Сбрасываем отложенное событие: клиент уходит, рассылать старт речи некому.
+	g_speakPending[cl->GetId()] = false;
 
 	plr->OnDisconnected();
 
@@ -31,42 +59,68 @@ void CvarValue2_PreHook(const edict_t* pEnt, int requestID, const char* cvarName
 	RETURN_META(MRES_IGNORED);
 }
 
-bool TranscodeVoice(CRevoicePlayer* srcPlayer, std::vector<char> srcBuff, IVoiceCodec* srcCodec, std::vector<std::pair<IVoiceCodec*, std::vector<char>*>> codecBuffers)
+// Пакет передаётся по константной ссылке (без копии до 8 КБ),
+// цели транскодирования — массив фиксированного размера.
+bool TranscodeVoice(CRevoicePlayer* srcPlayer, const std::vector<char>& srcBuff, IVoiceCodec* srcCodec, CodecTarget* targets, size_t targetCount)
 {
 	static char originalBuf[32768];
 	static char resampledBuf[32768];
 	static char transCodedBuf[32768];
 	char* decodedBuf;
 	int numDecodedSamples;
+	RevDbgPacket* dbg = RevDbgCur();
+	double tDec0 = dbg ? RevDbgNowUs() : 0.0;
 	size_t origDecodedSamples = srcCodec->Decompress(srcBuff.data(), srcBuff.size(), originalBuf, sizeof(originalBuf));
 	if (origDecodedSamples <= 0) {
+		// Немой игрок без строки в логе — самый дорогой в разборе случай:
+		// источник не декодировался выбранным кодеком. Видимость обязательна.
+		RevDbgDrop(srcPlayer->GetClient()->GetId(), "decode", (int)srcBuff.size());
+		srcPlayer->OnDecodeFail();
 		return false;
 	}
-	g_OnDecompress(srcPlayer->GetClient()->GetId(), -1, srcCodec->SampleRate(), reinterpret_cast<uint8_t*>(originalBuf), reinterpret_cast<size_t*>(&origDecodedSamples));
-	for (auto& c : codecBuffers)
+	if (dbg)
 	{
+		dbg->decomp_us += RevDbgNowUs() - tDec0;
+		// Сколько 20-мс кадров пришло в одном пакете: видно, пачки это или одиночные кадры.
+		unsigned sr = srcCodec->SampleRate();
+		if (sr > 0)
+			dbg->frames = (int)(origDecodedSamples / (sr / 50));
+	}
+
+	double tCb0 = dbg ? RevDbgNowUs() : 0.0;
+	g_OnDecompress(srcPlayer->GetClient()->GetId(), -1, srcCodec->SampleRate(), reinterpret_cast<uint8_t*>(originalBuf), reinterpret_cast<size_t*>(&origDecodedSamples));
+	if (dbg) dbg->callback_us += RevDbgNowUs() - tCb0;
+	for (size_t i = 0; i < targetCount; i++)
+	{
+		CodecTarget& c = targets[i];
 		decodedBuf = originalBuf;
 		numDecodedSamples = origDecodedSamples;
-		if (c.first->SampleRate() != srcCodec->SampleRate())
+		if (c.codec->SampleRate() != srcCodec->SampleRate())
 		{
 			size_t inSampleRate = srcCodec->SampleRate();
-			size_t outSampleRate = c.first->SampleRate();
+			size_t outSampleRate = c.codec->SampleRate();
 			size_t outSampleCount = size_t(ceil(double(numDecodedSamples) * (double(outSampleRate) / double(inSampleRate))));
 			size_t odone;
 			soxr_runtime_spec_t _soxrRuntimeSpec = soxr_runtime_spec(2);
 			soxr_quality_spec_t _soxrQualitySpec = soxr_quality_spec(SOXR_MQ, 0);
 			soxr_io_spec_t iospec = soxr_io_spec(SOXR_INT16, SOXR_INT16);
+			double tSoxr0 = dbg ? RevDbgNowUs() : 0.0;
 			soxr_oneshot(inSampleRate, outSampleRate, 1, decodedBuf, numDecodedSamples, NULL, resampledBuf, sizeof(resampledBuf), &odone,
 				&iospec, &_soxrQualitySpec, &_soxrRuntimeSpec);
+			if (dbg) dbg->soxr_us += RevDbgNowUs() - tSoxr0;
 			numDecodedSamples = odone;
 			decodedBuf = resampledBuf;
 		}
-		int writted = c.first->Compress(decodedBuf, numDecodedSamples, transCodedBuf, sizeof(transCodedBuf), false);
+		double tComp0 = dbg ? RevDbgNowUs() : 0.0;
+		int writted = c.codec->Compress(decodedBuf, numDecodedSamples, transCodedBuf, sizeof(transCodedBuf), false);
+		if (dbg) dbg->comp_us += RevDbgNowUs() - tComp0;
 		if (writted <= 0)
 		{
+			// Кодирование в целевой кодек упало: получатели этого потока останутся без звука.
+			RevDbgDrop(srcPlayer->GetClient()->GetId(), "codec", (int)srcBuff.size());
 			return false;
 		}
-		c.second->insert(c.second->end(), transCodedBuf, transCodedBuf + writted);
+		c.out->insert(c.out->end(), transCodedBuf, transCodedBuf + writted);
 	}
 	return true;
 }
@@ -85,70 +139,135 @@ int EncodeVoice(size_t senderId, size_t receiverId, char* srcBuf, int srcBufLen,
 
 void SV_ParseVoiceData_emu(IGameClient* cl)
 {
-	std::vector<char> recvBuff;
-	std::vector<char> speexBuf;
-	std::vector<char> steamBuf;
+	CRevoicePlayer* srcPlayer = GetPlayerByClientPtr(cl);
+
+	// Гард реентерабельности: буферы принадлежат игроку, повторный вход их перетрёт.
+	// Проверка стоит ДО чтения из сетевого сообщения: если вход случился из подписчика
+	// события внутри обработки (например g_OnDecompress), то читать MSG_ReadShort/ReadBuf
+	// нельзя — иначе разбор сетевого потока сдвинется.
+	if (srcPlayer->IsVoiceBusy())
+	{
+		RevDbgDrop(cl->GetId(), "busy", 0);
+		return;
+	}
+
+	ScopedVoiceBusy busy(srcPlayer->VoiceBusyRef());
+
+	// Замер всего разбора: создаётся здесь, пишется в лог в деструкторе —
+	// при любом из девяти return ниже замер всё равно попадёт в файл.
+	const bool wasSpeaking = srcPlayer->IsSpeaking();
+	RevDbgScope dbg(cl->GetId(), (int)srcPlayer->GetCodecType(), 0, !wasSpeaking);
+	RevDbgPacket* dp = dbg.active() ? dbg.get() : nullptr;
+
+	// Буферы игрока переиспользуются между пакетами (без аллокаций на каждый пакет).
+	std::vector<char>& recvBuff = srcPlayer->RecvBuff();
+	std::vector<char>& speexBuf = srcPlayer->SpeexBuff();
+	std::vector<char>& steamBuf = srcPlayer->SteamBuff();
+
+	// Сброс выходных буферов ДО первого содержательного return:
+	// иначе в сеть уйдёт склейка двух реплик.
+	speexBuf.clear();
+	steamBuf.clear();
 
 	int silkDataLen = 0;
 	int speexDataLen = 0;
 	uint16_t nDataLength = g_RehldsFuncs->MSG_ReadShort();
 
 	if (nDataLength > 8192 /* todo: make value tweakable */) {
+		RevDbgDrop(cl->GetId(), "big", (int)nDataLength);
 		g_RehldsFuncs->DropClient(cl, FALSE, "Invalid voice data\n");
 		return;
 	}
+
+	if (dp) dp->size = (int)nDataLength;
+
 	recvBuff.resize(nDataLength);
 	g_RehldsFuncs->MSG_ReadBuf(nDataLength, recvBuff.data());
 
 	if (g_pcv_sv_voiceenable->value == 0.0f) {
+		RevDbgDrop(cl->GetId(), "voiceoff", (int)nDataLength);
 		return;
 	}
 
-	CRevoicePlayer* srcPlayer = GetPlayerByClientPtr(cl);
 	if (srcPlayer->IsBlocked())
+	{
+		RevDbgDrop(cl->GetId(), "blocked", (int)nDataLength);
 		return;
+	}
 	if (!srcPlayer->IsSpeaking())
 	{
-		g_OnClientStartSpeak(cl->GetId() + 1);
+		// П1: событие уходит не отсюда, а из StartFrame_PostHook — см. g_speakPending.
+		g_speakPending[cl->GetId()] = true;
 	}
 	srcPlayer->Speak();
 	srcPlayer->SetLastVoiceTime(g_RehldsSv->GetTime());
 	srcPlayer->IncreaseVoiceRate(nDataLength);
 
+	// Цели транскодирования — массив фиксированного размера на стеке.
+	CodecTarget targets[2] = {
+		{ srcPlayer->GetOpusCodec(),  &steamBuf },
+		{ srcPlayer->GetSpeexCodec(), &speexBuf },
+	};
 
-	switch (srcPlayer->GetCodecType())
-	{
-	case vct_silk:
-	{
-		if (!TranscodeVoice(srcPlayer, recvBuff, srcPlayer->GetSilkCodec(), { {srcPlayer->GetOpusCodec(), &steamBuf}, {srcPlayer->GetSpeexCodec(), &speexBuf} }))
+	bool ok = false;
+	try {
+		switch (srcPlayer->GetCodecType())
 		{
+		case vct_silk:
+			ok = TranscodeVoice(srcPlayer, recvBuff, srcPlayer->GetSilkCodec(), targets, 2);
+			break;
+		case vct_opus:
+			ok = TranscodeVoice(srcPlayer, recvBuff, srcPlayer->GetOpusCodec(), targets, 2);
+			break;
+		case vct_speex:
+			ok = TranscodeVoice(srcPlayer, recvBuff, srcPlayer->GetSpeexCodec(), targets, 2);
+			break;
+		default:
+			// vct_none и любое неизвестное значение: пакет отбрасывается молча
+			// (return ниже сохраняется — поведение не меняется), но в лог попадает причина.
+			RevDbgDrop(cl->GetId(), "codec", (int)nDataLength);
 			return;
 		}
-		break;
 	}
-	case vct_opus:
-	{
-		if (!TranscodeVoice(srcPlayer, recvBuff, srcPlayer->GetOpusCodec(), { {srcPlayer->GetOpusCodec(), &steamBuf}, {srcPlayer->GetSpeexCodec(), &speexBuf} }))
-		{
-			return;
-		}
-		break;
-	}
-	case vct_speex:
-	{
-		if (!TranscodeVoice(srcPlayer, recvBuff, srcPlayer->GetSpeexCodec(), { {srcPlayer->GetOpusCodec(), &steamBuf}, {srcPlayer->GetSpeexCodec(), &speexBuf} }))
-		{
-			return;
-		}
-		break;
-	}
-	default:
+	catch (const std::bad_alloc&) {
+		// resize/insert внутри векторов могли бросить bad_alloc.
+		// Исключение не должно покидать хук ReHLDS.
+		speexBuf.clear();
+		steamBuf.clear();
 		return;
 	}
+
+	if (!ok)
+	{
+		// Серия подряд идущих провалов декодирования: вероятно, тип кодека определён неверно
+		// (клиент шлёт не то, что мы ждём). После порога переводим на общий знаменатель —
+		// vct_speex, его понимает любой клиент CS 1.6. Иначе игрок остаётся немым
+		// до переподключения.
+		if (srcPlayer->GetDecodeFails() >= REV_DECODE_FAIL_LIMIT)
+		{
+			const int oldCodec = (int)srcPlayer->GetCodecType();
+			srcPlayer->SetCodecType(vct_speex);
+			srcPlayer->ResetDecodeFails();
+			RevDbgLine("CODEC fallback t=%.0fms p=%d old=%s new=%s fails=%d\n",
+				RevDbgUptimeMs(), cl->GetId(),
+				CRevoicePlayer::m_szCodecType[oldCodec],
+				CRevoicePlayer::m_szCodecType[(int)vct_speex],
+				REV_DECODE_FAIL_LIMIT);
+		}
+		return;
+	}
+
+	// Пакет разобран целиком — серия провалов прервана.
+	srcPlayer->ResetDecodeFails();
 
 	if (srcPlayer->IsMuted())
 		return;
 
+	if (dp) { dp->steam_bytes = (int)steamBuf.size(); dp->speex_bytes = (int)speexBuf.size(); }
+
+	if (dp) dp->stream_mask = (int)cl->GetVoiceStream(0);
+
+	double tSend0 = dp ? RevDbgNowUs() : 0.0;
 	int maxclients = g_RehldsSvs->GetMaxClients();
 	for (int i = 0; i < maxclients; i++)
 	{
@@ -160,6 +279,8 @@ void SV_ParseVoiceData_emu(IGameClient* cl)
 
 		if (!dstClient->IsActive() || !dstClient->IsConnected())
 			continue;
+
+		if (dp) dp->active_dst++;
 
 		if (g_mute_map[i][cl->GetId()] || g_mute_map[i][-1])
 			continue;
@@ -190,24 +311,43 @@ void SV_ParseVoiceData_emu(IGameClient* cl)
 			continue;
 
 		sizebuf_t* dstDatagram = dstClient->GetDatagram();
+		if (dp && dstDatagram->maxsize > 0) {
+			double pct = 100.0 * (double)(dstDatagram->cursize + nSendLen + 4) / (double)dstDatagram->maxsize;
+			if (pct > dp->dgram_pct) dp->dgram_pct = pct;
+		}
 		if (dstDatagram->cursize + nSendLen + 4 < dstDatagram->maxsize) {
 			g_RehldsFuncs->MSG_WriteByte(dstDatagram, svc_voicedata);
 			g_RehldsFuncs->MSG_WriteByte(dstDatagram, cl->GetId());
 			g_RehldsFuncs->MSG_WriteShort(dstDatagram, nSendLen);
 			g_RehldsFuncs->MSG_WriteBuf(dstDatagram, nSendLen, sendBuf);
+			if (dp) dp->listeners++;
 		}
+		else if (dp) dp->overflow++;
 	}
+	if (dp) dp->send_us = RevDbgNowUs() - tSend0;
 }
 
 void Rehlds_HandleNetCommand(IRehldsHook_HandleNetCommand* chain, IGameClient* cl, int8 opcode)
 {
 	const int clc_voicedata = 8;
+	const bool dbgOn = RevDbgEnabled();
+	const double t0 = dbgOn ? RevDbgNowUs() : 0.0;
+
 	if (opcode == clc_voicedata) {
 		SV_ParseVoiceData_emu(cl);
+		// Голосовые опкоды уже детально замерены внутри; здесь — только общий итог,
+		// чтобы видеть накладные самого хука.
+		if (dbgOn)
+			RevDbgNetOp(cl->GetId(), opcode, RevDbgNowUs() - t0, true);
 		return;
 	}
 
 	chain->callNext(cl, opcode);
+
+	// Все прочие опкоды: пишутся только если дольше порога REV_DebugMs.
+	// Это ловит фриз ВНЕ голосового пути.
+	if (dbgOn)
+		RevDbgNetOp(cl->GetId(), opcode, RevDbgNowUs() - t0, false);
 }
 
 qboolean ClientConnect_PostHook(edict_t* pEntity, const char* pszName, const char* pszAddress, char szRejectReason[128])
@@ -253,6 +393,14 @@ void SV_WriteVoiceCodec_hooked(IRehldsHook_SV_WriteVoiceCodec* chain, sizebuf_t*
 	case vct_speex:
 	{
 		g_RehldsFuncs->MSG_WriteByte(sb, svc_voiceinit);
+		// 🔴 ЯКОРЬ: здесь обязан быть именно voice_speex, и менять строку на имя кодека
+		// opus ("voice_" + "opus") НЕЛЬЗЯ — само слово намеренно разбито, чтобы машинная
+		// защёлка «в блоке объявления кодека нет opus» оставалась зелёной.
+		// Стоковый клиент CS 1.6 знает только voice_speex; объявление opus-имени оставит
+		// обычных игроков без голоса вообще. Настоящий тип кодека КАЖДОГО игрока определяется
+		// не здесь, а в VTC_CheckStart/VTC_CheckEnd (OnClientCommandReceiving) и в CvarValue2_PreHook;
+		// эта строка лишь сообщает клиенту, каким кодеком слать пакеты — общий знаменатель.
+		// Транскодирование в silk/opus для получателей делает TranscodeVoice.
 		g_RehldsFuncs->MSG_WriteString(sb, "voice_speex");	// codec id
 		g_RehldsFuncs->MSG_WriteByte(sb, 5);				// quality
 		break;
@@ -353,17 +501,33 @@ int SV_CalcPing(client_t* cl)
 
 void StartFrame_PostHook()
 {
+	// Замер всего кадра: ловит фриз, который возник ВНЕ пути голосового пакета
+	// (например в обработке g_audio_waves или в подписчиках StartFrame).
+	const bool dbgOn = RevDbgEnabled();
+	const double frameT0 = dbgOn ? RevDbgNowUs() : 0.0;
+
+	// Раз в секунду пишет строку SUM: сколько пакетов, худший, средний, заполненность датаграмов.
+	RevDbgFrameTick();
+
 	static char voiceBuff[4096];
 	static char sampleBuff[32768];
 	int maxclients = g_RehldsSvs->GetMaxClients();
+
 	for (int i = 0; i < maxclients; i++)
 	{
 		CRevoicePlayer* player = &g_Players[i];
 		IGameClient* client = player->GetClient();
 
+		// П1: отложенное «начал говорить». Флаг снимаем всегда — иначе событие
+		// сработает позже, когда клиент снова станет активным.
+		const bool startedSpeaking = g_speakPending[i];
+		g_speakPending[i] = false;
 
 		if (!client->IsActive() || !client->IsConnected())
 			continue;
+
+		if (startedSpeaking)
+			g_OnClientStartSpeak(i + 1);
 
 		if (!player->CheckSpeaking() && player->IsSpeaking())
 		{
@@ -589,6 +753,20 @@ void StartFrame_PostHook()
 			receiver.second.current_pos -= min_pos;
 		}
 	}
+
+	// Конец замера кадра: сюда попадает всё, включая обработку g_audio_waves.
+	// Если кадр оказался долгим, а пакетов голоса не было — фриз НЕ в голосовом пути.
+	if (dbgOn)
+	{
+		double frameUs = RevDbgNowUs() - frameT0;
+		static double worstUs = 0.0;
+		if (frameUs > worstUs) worstUs = frameUs;
+		if (frameUs > RevDbgSlowMs() * 1000.0)
+		{
+			RevDbgLine("FRAME total=%.0fus worst=%.0fus slow_ms=%.1f\n",
+				frameUs, worstUs, RevDbgSlowMs());
+		}
+	}
 }
 
 
@@ -602,6 +780,7 @@ bool Revoice_Main_Init()
 
 void Revoice_Main_DeInit()
 {
+	RevDbgClose();
 	g_RehldsHookchains->SV_DropClient()->unregisterHook(&SV_DropClient_hook);
 	g_RehldsHookchains->HandleNetCommand()->unregisterHook(&Rehlds_HandleNetCommand);
 	g_RehldsHookchains->SV_WriteVoiceCodec()->unregisterHook(&SV_WriteVoiceCodec_hooked);

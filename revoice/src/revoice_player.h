@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 #include "revoice_shared.h"
 #include "VoiceEncoder_Silk.h"
 #include "SteamP2PCodec.h"
@@ -7,9 +9,26 @@
 #include "voice_codec_frame.h"
 
 constexpr auto SPEAKING_TIMEOUT = std::chrono::milliseconds(200);
+
+// Порог автоперевода на vct_speex при серии провалов декодирования.
+// Почему 8: кадр голоса — 20 мс, значит 8 подряд нераспознанных кадров это примерно
+// 0,16 с чистой речи; с учётом пауз между пакетами это порядка 0,5 с — достаточно,
+// чтобы отличить неверно определённый кодек от случайного битого пакета, и мало,
+// чтобы игрок успел заметить, что его не слышно.
+constexpr int REV_DECODE_FAIL_LIMIT = 8;
+
 class CRevoicePlayer {
 private:
 	IGameClient* m_Client;
+	// Буферы голосового пакета. Живут между пакетами: создавать их на каждый пакет дорого.
+	std::vector<char> m_recvBuff;
+	std::vector<char> m_speexBuff;
+	std::vector<char> m_steamBuff;
+	// Флаг занятости: защита от повторного входа в разбор пакета для того же игрока.
+	bool m_VoiceBusy = false;
+	// Счётчик подряд идущих провалов декодирования. Если у игрока объявлен кодек,
+	// которым его пакеты не разбираются, он иначе остаётся немым до переподключения.
+	int m_iDecodeFails = 0;
 	CodecType m_CodecType;
 	CSteamP2PCodec* m_SilkCodec;
 	CSteamP2PCodec* m_OpusCodec;
@@ -52,6 +71,20 @@ public:
 	CSteamP2PCodec* GetOpusCodec() const { return m_OpusCodec; }
 	VoiceCodec_Frame* GetSpeexCodec() const { return m_SpeexCodec; }
 	IGameClient* GetClient() const { return m_Client; }
+
+	// Доступ к переиспользуемым буферам
+	std::vector<char>& RecvBuff()  { return m_recvBuff; }
+	std::vector<char>& SpeexBuff() { return m_speexBuff; }
+	std::vector<char>& SteamBuff() { return m_steamBuff; }
+
+	// Флаг занятости (RAII-гард реентерабельности)
+	bool IsVoiceBusy() const { return m_VoiceBusy; }
+	bool& VoiceBusyRef() { return m_VoiceBusy; }
+
+	// Счётчик подряд идущих провалов декодирования (см. REV_DECODE_FAIL_LIMIT)
+	int  GetDecodeFails() const { return m_iDecodeFails; }
+	int  OnDecodeFail() { return ++m_iDecodeFails; }
+	void ResetDecodeFails() { m_iDecodeFails = 0; }
 	void Mute() { m_IsMuted_Old = true; }
 	void UnMute() { m_IsMuted_Old = false; }
 	bool IsMuted() const { return m_IsMuted_Old; }
