@@ -21,3 +21,8 @@ extern cvar_t *g_pcv_sv_voiceenable;
 extern cvar_t *g_pcv_rev_hltv_codec;
 extern cvar_t *g_pcv_rev_default_codec;
 extern cvar_t* g_pcv_rev_bitrate;
+
+// Отладка: 0 — выкл, 1 — только медленные пакеты, 2 — каждый пакет.
+extern cvar_t *g_pcv_rev_debug;
+// Порог «медленного» пакета, мс.
+extern cvar_t *g_pcv_rev_debug_ms;

@@ -55,6 +55,7 @@ set(REVP_SOURCES
 	revoice/src/precompiled.cpp
 	revoice/src/public_amalgamation.cpp
 	revoice/src/revoice_cfg.cpp
+	revoice/src/revoice_debug.cpp
 	revoice/src/revoice_main.cpp
 	revoice/src/revoice_api.cpp
 	revoice/src/revoice_player.cpp
@@ -76,10 +77,18 @@ set(CMAKE_SHARED_LINKER_FLAGS_DEBUG "/nologo /debug:fastlink /incremental /edita
 target_link_options(revoice_plus PRIVATE /MACHINE:X86 /EXPORT:GiveFnptrsToDll=_GiveFnptrsToDll@8)
 endif()
 
-target_link_libraries(revoice_plus PRIVATE Opus SILK Speex soxr 	
+if (CMAKE_CXX_COMPILER_ID MATCHES "Intel")
+# Флаги Intel-компилятора: GCC/Clang их не знают и сборка падает.
+# Под ICC поведение прежнее, под остальными — без них.
+target_link_libraries(revoice_plus PRIVATE Opus SILK Speex soxr 
  	-static-libstdc++ 
 	-static-intel -no-intel-extensions   
 	-ldl -lm)
+else()
+target_link_libraries(revoice_plus PRIVATE Opus SILK Speex soxr 
+ 	-static-libstdc++ 
+	-ldl -lm)
+endif()
 target_include_directories(revoice_plus PRIVATE ${REVP_INCLUDE_DIRS})
 		
 set_target_properties(revoice_plus PROPERTIES PREFIX "")
